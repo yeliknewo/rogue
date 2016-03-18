@@ -8,8 +8,8 @@ use image::{load_from_memory};
 use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 
-use math::{Mat4, Vec2, Vec3, Vec4};
-use logic::{ID, World};
+use math::{Vec2};
+use logic::{ID};
 use graphics::{Vertex, Index, EntityDataGraphics, Transforms};
 
 pub struct Window {

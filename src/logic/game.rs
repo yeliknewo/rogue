@@ -8,7 +8,7 @@ use logic::{World, IDManager};
 use math::{Vec2};
 use graphics::{Window, Transforms};
 
-pub struct Game<T> {
+pub struct Game<T: Send + Sync> {
     world: Arc<RwLock<World<T>>>,
     thread_pool: Pool,
     display: Arc<RwLock<Display>>,
@@ -18,18 +18,19 @@ pub struct Game<T> {
     manager: Arc<RwLock<IDManager>>,
 }
 
-impl<T> Game<T> {
+impl<T: Send + Sync> Game<T> {
     pub fn new(manager: Arc<RwLock<IDManager>>, thread_count: u32, resolution: Vec2) -> Game<T> {
         let keyboard = Arc::new(RwLock::new(Keyboard::new()));
         let mouse = Arc::new(RwLock::new(Mouse::new()));
         let display = Arc::new(RwLock::new(Display::new(resolution)));
+        let transforms = Arc::new(RwLock::new(Transforms::new()));
         Game {
-            world: Arc::new(RwLock::new(World::new(keyboard.clone(), mouse.clone(), display.clone()))),
+            world: Arc::new(RwLock::new(World::new(keyboard.clone(), mouse.clone(), display.clone(), transforms.clone()))),
             thread_pool: Pool::new(thread_count),
             display: display,
             mouse: mouse,
             keyboard: keyboard,
-            transforms: Arc::new(RwLock::new(Transforms::new())),
+            transforms: transforms,
             manager: manager,
         }
     }
@@ -156,6 +157,20 @@ impl<T> Game<T> {
     }
 
     fn tick(&mut self, delta_time: f64) {
-
+        let world = &self.world;
+        let manager = &self.manager;
+        let delta_time = Arc::new(delta_time);
+        self.thread_pool.scoped(|scope| {
+            let entity_data = world.read().expect("Unable to Read World in Tick in Game").get_entity_data();
+            let entity_data = entity_data.read().expect("Unable to Read Entity Data in Tick in Game");
+            for entry in entity_data.iter() {
+                let entity = entry.1.clone();
+                let world = world.clone();
+                let delta_time = delta_time.clone();
+                scope.execute(move || {
+                    entity.read().expect("Unable to Read Entity in Tick in Game").tick(&delta_time, &world.read().expect("Unable to Read World in Tick in Game"));
+                });
+            }
+        });
     }
 }

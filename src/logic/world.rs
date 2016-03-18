@@ -4,20 +4,23 @@ use std::collections::{HashMap};
 use input::{Keyboard, Mouse, Display, KeyCode, MouseButton, Button};
 use logic::{ID, EntityData};
 use math::{Vec2};
+use graphics::{Transforms};
 
-pub struct World<T> {
+pub struct World<T: Send + Sync> {
     keyboard: Arc<RwLock<Keyboard>>,
     mouse: Arc<RwLock<Mouse>>,
     display: Arc<RwLock<Display>>,
+    transforms: Arc<RwLock<Transforms>>,
     entity_data: Arc<RwLock<HashMap<ID, Arc<RwLock<EntityData<T>>>>>>,
 }
 
-impl<T> World<T> {
-    pub fn new(keyboard: Arc<RwLock<Keyboard>>, mouse: Arc<RwLock<Mouse>>, display: Arc<RwLock<Display>>) -> World<T> {
+impl<T: Send + Sync> World<T> {
+    pub fn new(keyboard: Arc<RwLock<Keyboard>>, mouse: Arc<RwLock<Mouse>>, display: Arc<RwLock<Display>>, transforms: Arc<RwLock<Transforms>>) -> World<T> {
         World {
             keyboard: keyboard,
             mouse: mouse,
             display: display,
+            transforms: transforms,
             entity_data: Arc::new(RwLock::new(HashMap::new())),
         }
     }
