@@ -2,23 +2,19 @@ use std::sync::{Arc, RwLock};
 use std::collections::{HashMap};
 
 use input::{Keyboard, Mouse, Display, KeyCode, MouseButton, Button};
-use logic::{ID, EntityData, UserData};
+use logic::{ID, EntityData};
 use math::{Vec2};
 use graphics::{Transforms};
 
-pub struct World<T: UserData<T>> {
+pub struct World<T: EntityData<T>> {
     keyboard: Arc<RwLock<Keyboard>>,
     mouse: Arc<RwLock<Mouse>>,
     display: Arc<RwLock<Display>>,
     transforms: Arc<RwLock<Transforms>>,
-    entity_data: Arc<RwLock<HashMap<ID, Arc<RwLock<EntityData<T>>>>>>,
+    entity_data: Arc<RwLock<HashMap<ID, Arc<RwLock<T>>>>>,
 }
 
-unsafe impl<T: UserData<T>> Send for World<T> {
-
-}
-
-impl<T: UserData<T>> World<T> {
+impl<T: EntityData<T>> World<T> {
     pub fn new(keyboard: Arc<RwLock<Keyboard>>, mouse: Arc<RwLock<Mouse>>, display: Arc<RwLock<Display>>, transforms: Arc<RwLock<Transforms>>) -> World<T> {
         World {
             keyboard: keyboard,
@@ -49,7 +45,7 @@ impl<T: UserData<T>> World<T> {
         self.display.read().expect("Unable to Read Display in Get Aspect Ratio in World").get_aspect_ratio()
     }
 
-    pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<ID, Arc<RwLock<EntityData<T>>>>>> {
+    pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<ID, Arc<RwLock<T>>>>> {
         self.entity_data.clone()
     }
 }

@@ -1,9 +1,10 @@
 use std::sync::{Arc, RwLock};
 
 use logic::{ID, IDManager, IDType};
+use graphics::{Window};
 
 #[derive(Clone)]
-pub struct EntityDataGraphics {
+pub struct Renderable {
     texture_id: ID,
     vertex_id: ID,
     index_id: ID,
@@ -13,9 +14,9 @@ pub struct EntityDataGraphics {
     model_id: ID,
 }
 
-impl EntityDataGraphics {
-    pub fn new(manager: Arc<RwLock<IDManager>>) -> EntityDataGraphics {
-        EntityDataGraphics {
+impl Renderable {
+    pub fn new(manager: Arc<RwLock<IDManager>>) -> Renderable {
+        Renderable {
             texture_id: ID::new(manager.clone(), IDType::Texture),
             vertex_id: ID::new(manager.clone(), IDType::Vertex),
             index_id: ID::new(manager.clone(), IDType::Index),
@@ -24,6 +25,10 @@ impl EntityDataGraphics {
             view_id: ID::new(manager.clone(), IDType::View),
             model_id: ID::new(manager.clone(), IDType::Model),
         }
+    }
+
+    pub fn render(&mut self, window: &mut Window) {
+
     }
 
     pub fn set_vertex_id(&mut self, id: ID) {

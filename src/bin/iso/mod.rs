@@ -1,5 +1,5 @@
 use std::sync::{Arc, RwLock};
-use dorp::{init, Game, Window, WindowArgs, UserData, World, IDManager, ID, IDType, EntityData, EntityDataGraphics};
+use dorp::{init, Game, Window, WindowArgs, EntityData, World, IDManager, ID, IDType, Vec3, Transform, Renderable};
 
 pub fn main() {
     let manager = init();
@@ -17,24 +17,47 @@ pub fn main() {
     {
         let mut data = data.write().expect("Unable to Write Entity Data in Main in Iso");
         data.insert(ID::new(manager.clone(), IDType::Entity), Arc::new(RwLock::new(
-            EntityData::new()
-            .with_graphics(Arc::new(RwLock::new(EntityDataGraphics::new(manager.clone()))))
-            .with_user(Arc::new(RwLock::new(IsoData::new())))
+            IsoData::new()
+            .with_renderable(
+                Renderable::new(manager.clone())
+            )
+            .with_transform(
+                Transform::new()
+                .with_position(Vec3::zero())
+                .with_rotation(Vec3::zero())
+                .with_scalation(Vec3::one())
+            )
         )));
     }
 
     game.run(&mut window);
 }
 
-pub struct IsoData;
+pub struct IsoData {
+    transform: Option<Box<Arc<RwLock<Transform>>>>,
+    renderable: Option<Box<Arc<RwLock<Renderable>>>>,
+}
 
 impl IsoData {
     pub fn new() -> IsoData {
-        IsoData
+        IsoData {
+            transform: None,
+            renderable: None,
+        }
+    }
+
+    pub fn with_transform(mut self, transform: Transform) -> IsoData {
+        self.transform = Some(Box::new(Arc::new(RwLock::new(transform))));
+        self
+    }
+
+    pub fn with_renderable(mut self, renderable: Renderable) -> IsoData {
+        self.renderable = Some(Box::new(Arc::new(RwLock::new(renderable))));
+        self
     }
 }
 
-impl UserData<IsoData> for IsoData {
+impl EntityData<IsoData> for IsoData {
     fn tick(&self, delta_time: Arc<f64>, world: Arc<World<IsoData>>) {
 
     }
@@ -43,7 +66,16 @@ impl UserData<IsoData> for IsoData {
 
     }
 
-    fn render(&mut self, window: &mut Window, data_graphics: Arc<RwLock<EntityDataGraphics>>) {
+    fn render(&mut self, window: &mut Window) {
+        match self.renderable.clone() {
+            Some(renderable) => {
+                renderable.write().expect("Unable to Write Renderable in Render in IsoData").render(window);
+            },
+            None => (),
+        }
+    }
 
+    fn get_graphics_data(&self) -> Option<Box<Arc<RwLock<Renderable>>>> {
+        self.renderable.clone()
     }
 }

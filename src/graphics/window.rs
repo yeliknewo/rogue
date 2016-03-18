@@ -10,7 +10,8 @@ use std::sync::{Arc, RwLock};
 
 use math::{Vec2};
 use logic::{ID};
-use graphics::{Vertex, Index, EntityDataGraphics, Transforms};
+use graphics::{Vertex, Index, Transforms};
+use componenents::{Renderable};
 
 pub struct Window {
     facade: GlutinFacade,
@@ -163,7 +164,7 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn draw_entity(&mut self, entity_arc: Arc<RwLock<EntityDataGraphics>>, transforms: Arc<RwLock<Transforms>>) {
+    pub fn draw_entity(&mut self, entity_arc: Box<Arc<RwLock<Renderable>>>, transforms: Arc<RwLock<Transforms>>) {
         let entity = entity_arc.read().expect("Unable to Read Entity in Draw Entity");
         self.frame.draw(
             self.vertex_buffers.get(&entity.get_vertex_id()).expect("Unable to Get Vertex Buffer in Draw Entity"),

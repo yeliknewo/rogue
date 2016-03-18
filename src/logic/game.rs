@@ -4,11 +4,11 @@ use time::{precise_time_s};
 use glium::glutin::Event as WindowEvent;
 
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
-use logic::{World, IDManager, UserData};
+use logic::{World, IDManager, EntityData};
 use math::{Vec2};
 use graphics::{Window, Transforms};
 
-pub struct Game<T: UserData<T>> {
+pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
     thread_pool: Pool,
     display: Arc<RwLock<Display>>,
@@ -18,7 +18,7 @@ pub struct Game<T: UserData<T>> {
     manager: Arc<RwLock<IDManager>>,
 }
 
-impl<T: UserData<T>> Game<T> {
+impl<T: EntityData<T>> Game<T> {
     pub fn new(manager: Arc<RwLock<IDManager>>, thread_count: u32, resolution: Vec2) -> Game<T> {
         let keyboard = Arc::new(RwLock::new(Keyboard::new()));
         let mouse = Arc::new(RwLock::new(Mouse::new()));
@@ -148,7 +148,7 @@ impl<T: UserData<T>> Game<T> {
         let entity_data = entity_data.read().expect("Unable to Read Entity Data in Render in Game");
         for entry in entity_data.iter() {
             let entity = entry.1;
-            let entity = entity.read().expect("Unable to Read Entity in Render in Game");
+            let mut entity = entity.write().expect("Unable to Write Entity in Render in Game");
             entity.render(window);
         }
         let mut frame = window.frame();
@@ -186,7 +186,7 @@ impl<T: UserData<T>> Game<T> {
                 let world = world.clone();
                 let manager = manager.clone();
                 scope.execute(move || {
-                    entity.read().expect("Unable to Read Entity in Tick in Game").tick2(manager, world);
+                    entity.write().expect("Unable to Write Entity in Tick in Game").tick_mut(manager, world);
                 });
             }
         });
