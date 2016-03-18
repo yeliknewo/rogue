@@ -2,11 +2,11 @@ use std::sync::{Arc, RwLock};
 use std::collections::{HashMap};
 
 use input::{Keyboard, Mouse, Display, KeyCode, MouseButton, Button};
-use logic::{ID, EntityData};
+use logic::{ID, EntityData, UserData};
 use math::{Vec2};
 use graphics::{Transforms};
 
-pub struct World<T: Send + Sync> {
+pub struct World<T: UserData<T>> {
     keyboard: Arc<RwLock<Keyboard>>,
     mouse: Arc<RwLock<Mouse>>,
     display: Arc<RwLock<Display>>,
@@ -14,7 +14,11 @@ pub struct World<T: Send + Sync> {
     entity_data: Arc<RwLock<HashMap<ID, Arc<RwLock<EntityData<T>>>>>>,
 }
 
-impl<T: Send + Sync> World<T> {
+unsafe impl<T: UserData<T>> Send for World<T> {
+
+}
+
+impl<T: UserData<T>> World<T> {
     pub fn new(keyboard: Arc<RwLock<Keyboard>>, mouse: Arc<RwLock<Mouse>>, display: Arc<RwLock<Display>>, transforms: Arc<RwLock<Transforms>>) -> World<T> {
         World {
             keyboard: keyboard,

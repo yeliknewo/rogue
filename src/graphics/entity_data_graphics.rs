@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use logic::{ID, IDManager, IDType};
 
+#[derive(Clone)]
 pub struct EntityDataGraphics {
     texture_id: ID,
     vertex_id: ID,
@@ -23,6 +24,34 @@ impl EntityDataGraphics {
             view_id: ID::new(manager.clone(), IDType::View),
             model_id: ID::new(manager.clone(), IDType::Model),
         }
+    }
+
+    pub fn set_vertex_id(&mut self, id: ID) {
+        self.vertex_id = id;
+    }
+
+    pub fn set_index_id(&mut self, id: ID) {
+        self.index_id = id;
+    }
+
+    pub fn set_texture_id(&mut self, id: ID) {
+        self.texture_id = id;
+    }
+
+    pub fn set_draw_parameters_id(&mut self, id: ID) {
+        self.draw_parameters_id = id;
+    }
+
+    pub fn set_perspective_id(&mut self, id: ID) {
+        self.perspective_id = id;
+    }
+
+    pub fn set_view_id(&mut self, id: ID) {
+        self.view_id = id;
+    }
+
+    pub fn set_model_id(&mut self, id: ID) {
+        self.model_id = id;
     }
 
     pub fn get_vertex_id(&self) -> ID {

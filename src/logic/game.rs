@@ -4,12 +4,12 @@ use time::{precise_time_s};
 use glium::glutin::Event as WindowEvent;
 
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
-use logic::{World, IDManager};
+use logic::{World, IDManager, UserData};
 use math::{Vec2};
 use graphics::{Window, Transforms};
 
-pub struct Game<T: Send + Sync> {
-    world: Arc<RwLock<World<T>>>,
+pub struct Game<T: UserData<T>> {
+    world: Arc<World<T>>,
     thread_pool: Pool,
     display: Arc<RwLock<Display>>,
     mouse: Arc<RwLock<Mouse>>,
@@ -18,14 +18,14 @@ pub struct Game<T: Send + Sync> {
     manager: Arc<RwLock<IDManager>>,
 }
 
-impl<T: Send + Sync> Game<T> {
+impl<T: UserData<T>> Game<T> {
     pub fn new(manager: Arc<RwLock<IDManager>>, thread_count: u32, resolution: Vec2) -> Game<T> {
         let keyboard = Arc::new(RwLock::new(Keyboard::new()));
         let mouse = Arc::new(RwLock::new(Mouse::new()));
         let display = Arc::new(RwLock::new(Display::new(resolution)));
         let transforms = Arc::new(RwLock::new(Transforms::new()));
         Game {
-            world: Arc::new(RwLock::new(World::new(keyboard.clone(), mouse.clone(), display.clone(), transforms.clone()))),
+            world: Arc::new(World::new(keyboard.clone(), mouse.clone(), display.clone(), transforms.clone())),
             thread_pool: Pool::new(thread_count),
             display: display,
             mouse: mouse,
@@ -33,6 +33,10 @@ impl<T: Send + Sync> Game<T> {
             transforms: transforms,
             manager: manager,
         }
+    }
+
+    pub fn get_world(&self) -> Arc<World<T>> {
+        self.world.clone()
     }
 
     fn pause(&mut self) {
@@ -139,13 +143,18 @@ impl<T: Send + Sync> Game<T> {
     }
 
     fn render(&mut self, window: &mut Window) {
-        let mut frame = window.frame();
-        let world = self.world.read().expect("Unable to Read World in Render in Game");
+        let world = self.world.clone();
         let entity_data = world.get_entity_data();
         let entity_data = entity_data.read().expect("Unable to Read Entity Data in Render in Game");
         for entry in entity_data.iter() {
             let entity = entry.1;
-            let entity = entity.read().expect("Unable to Read Entity in render in Game");
+            let entity = entity.read().expect("Unable to Read Entity in Render in Game");
+            entity.render(window);
+        }
+        let mut frame = window.frame();
+        for entry in entity_data.iter() {
+            let entity = entry.1;
+            let entity = entity.read().expect("Unable to Read Entity in Render in Game");
             match entity.get_graphics_data() {
                 Some(data) => {
                     frame.draw_entity(data, self.transforms.clone());
@@ -157,18 +166,27 @@ impl<T: Send + Sync> Game<T> {
     }
 
     fn tick(&mut self, delta_time: f64) {
-        let world = &self.world;
-        let manager = &self.manager;
+        let world = self.world.clone();
+        let manager = self.manager.clone();
         let delta_time = Arc::new(delta_time);
         self.thread_pool.scoped(|scope| {
-            let entity_data = world.read().expect("Unable to Read World in Tick in Game").get_entity_data();
+            let entity_data = world.get_entity_data();
             let entity_data = entity_data.read().expect("Unable to Read Entity Data in Tick in Game");
             for entry in entity_data.iter() {
                 let entity = entry.1.clone();
                 let world = world.clone();
                 let delta_time = delta_time.clone();
                 scope.execute(move || {
-                    entity.read().expect("Unable to Read Entity in Tick in Game").tick(&delta_time, &world.read().expect("Unable to Read World in Tick in Game"));
+                    entity.read().expect("Unable to Read Entity in Tick in Game").tick(delta_time, world);
+                });
+            }
+            scope.join_all();
+            for entry in entity_data.iter() {
+                let entity = entry.1.clone();
+                let world = world.clone();
+                let manager = manager.clone();
+                scope.execute(move || {
+                    entity.read().expect("Unable to Read Entity in Tick in Game").tick2(manager, world);
                 });
             }
         });
