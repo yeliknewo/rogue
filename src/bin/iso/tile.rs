@@ -36,7 +36,7 @@ impl Tile {
                         transform.write().expect("Unable to Write Transform in Tick in Tile")
                         .prep_set_position(
                             my_transform.read().expect("Unable to Read Transform in Tick in Tile")
-                            .get_position() + Vec3::from([0.5, 0.1, 0.5])
+                            .get_position() + Vec3::from([0.25, 0.01, 0.25])
                         );
                     },
                     None => {
