@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Error};
 use std::f32::consts::{PI};
 use glium::uniforms::{AsUniformValue, UniformValue};
 
-use math::{Vec3, Vec4};
+use math::{Vec3, Vec4, DEG_TO_RAD};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Mat4 {
@@ -24,7 +24,7 @@ impl Mat4 {
 	}
 
 	pub fn perspective(near: f32, far: f32, field_of_view: f32, aspect_ratio: f32) -> Mat4 {
-		let field_of_view = field_of_view * PI / 180.0;
+		let field_of_view = field_of_view * DEG_TO_RAD;
 		let d = 1.0 / ((field_of_view / 2.0).tan());
 		Mat4::from([[
 					d / aspect_ratio, 	0.0, 	0.0, 							0.0,
@@ -40,7 +40,7 @@ impl Mat4 {
 	}
 
 	pub fn orthographic(near: f32, far: f32, field_of_view: f32, aspect_ratio: f32) -> Mat4 {
-		let field_of_view = field_of_view * PI / 180.0;
+		let field_of_view = field_of_view * DEG_TO_RAD;
 		let d = 1.0 / ((field_of_view / 2.0).tan());
 		Mat4::from([[
 					d / aspect_ratio, 	0.0, 	0.0, 					0.0,
@@ -99,11 +99,11 @@ impl Mat4 {
 
 	pub fn translation_from_vec3(vec3: Vec3) -> Mat4 {
 		Mat4::from([[
-					1.0, 	0.0, 		0.0, 		vec3[0],
+					1.0, 	0.0, 		0.0, 		-vec3[0],
 				],[
-					0.0, 	1.0, 		0.0, 		vec3[1],
+					0.0, 	1.0, 		0.0, 		-vec3[1],
 				],[
-					0.0, 	0.0, 		1.0,		vec3[2],
+					0.0, 	0.0, 		1.0,		-vec3[2],
 				],[
 					0.0, 	0.0, 		0.0, 		1.0,
 				]

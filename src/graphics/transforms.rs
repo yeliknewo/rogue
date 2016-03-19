@@ -3,7 +3,7 @@ use std::collections::{HashMap};
 
 use logic::{ID};
 use math::{Mat4, Vec2, Vec3, Vec4};
-use componenents::{Renderable};
+use components::{Renderable};
 
 pub struct Transforms {
     perspective_mat4s: Arc<RwLock<HashMap<ID, Mat4>>>,

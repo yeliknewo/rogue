@@ -155,7 +155,7 @@ impl<T: EntityData<T>> Game<T> {
         for entry in entity_data.iter() {
             let entity = entry.1;
             let entity = entity.read().expect("Unable to Read Entity in Render in Game");
-            match entity.get_graphics_data() {
+            match entity.get_renderable() {
                 Some(data) => {
                     frame.draw_entity(data, self.transforms.clone());
                 },

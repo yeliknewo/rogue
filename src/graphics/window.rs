@@ -11,7 +11,7 @@ use std::sync::{Arc, RwLock};
 use math::{Vec2};
 use logic::{ID};
 use graphics::{Vertex, Index, Transforms, DrawMethod, method_to_parameters};
-use componenents::{Renderable};
+use components::{Renderable};
 
 pub struct Window {
     facade: GlutinFacade,

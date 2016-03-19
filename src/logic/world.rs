@@ -12,6 +12,7 @@ pub struct World<T: EntityData<T>> {
     display: Arc<RwLock<Display>>,
     transforms: Arc<RwLock<Transforms>>,
     entity_data: Arc<RwLock<HashMap<ID, Arc<RwLock<T>>>>>,
+    names: Arc<RwLock<HashMap<&'static str, ID>>>,
 }
 
 impl<T: EntityData<T>> World<T> {
@@ -22,6 +23,7 @@ impl<T: EntityData<T>> World<T> {
             display: display,
             transforms: transforms,
             entity_data: Arc::new(RwLock::new(HashMap::new())),
+            names: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -49,7 +51,37 @@ impl<T: EntityData<T>> World<T> {
         self.entity_data.clone()
     }
 
+    pub fn get_entity_by_name(&self, name: &'static str) -> Option<Arc<RwLock<T>>> {
+        let names = self.names.read().expect("Unable to Read Names in Get Entity By Name in World");
+        match names.get(name) {
+            Some(id) => {
+                let entities = self.entity_data.read().expect("Unable to Read Entity Data in Get Entity By Name in World");
+                match entities.get(id) {
+                    Some(entity) => {
+                        Some(entity.clone())
+                    },
+                    None => None,
+                }
+            },
+            None => None,
+        }
+    }
+
     pub fn get_transforms(&self) -> Arc<RwLock<Transforms>> {
         self.transforms.clone()
+    }
+
+    pub fn register_name(&self, id: ID, name: &'static str) -> Result<(), &'static str>{
+        let mut names = self.names.write().expect("Unable to Write Names in Register Name in World");
+        if names.contains_key(name) {
+            return Err("Name Already in Use");
+        }
+        names.insert(name, id);
+        Ok(())
+    }
+
+    pub fn deregister_name(&self, name: &'static str) {
+        let mut names = self.names.write().expect("Unable to Write Names in Deregister Name in World");
+        names.remove(name);
     }
 }
