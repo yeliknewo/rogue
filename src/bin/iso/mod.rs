@@ -35,9 +35,9 @@ pub fn main() {
                 ))
                 .with_texture(STONE_TEXTURE)
                 .with_draw_method(DrawMethod::Both(DepthTestMethod::IfLess, CullingMethod::Clockwise))
-                .with_perspective(Mat4::identity(), Mat4::identity())
-                .with_view(Mat4::identity(), Mat4::identity())
-                .with_model(Mat4::identity(), Mat4::identity())
+                .with_perspective(Mat4::orthographic(0.1, 100.0, 90.0, 16.0 / 9.0))
+                .with_view(Mat4::identity())
+                .with_model(Mat4::identity())
             )
             .with_transform(
                 Transform::new()

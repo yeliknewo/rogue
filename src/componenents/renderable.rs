@@ -42,6 +42,25 @@ impl Renderable {
         }
     }
 
+    pub fn new_from(renderable: &Renderable) -> Renderable {
+        Renderable {
+            vertex_id: renderable.vertex_id,
+            index_id: renderable.index_id,
+            texture_id: renderable.texture_id,
+            draw_method_id: renderable.draw_method_id,
+            perspective_id: renderable.perspective_id,
+            view_id: renderable.view_id,
+            model_id: renderable.model_id,
+            vertices: None,
+            indices: None,
+            texture: None,
+            draw_method: None,
+            perspective: None,
+            view: None,
+            model: None,
+        }
+    }
+
     pub fn render<T: EntityData<T>>(&mut self, window: &mut Window, world: Arc<World<T>>) {
         match self.vertices.clone() {
             Some(vertices) => {
@@ -117,18 +136,18 @@ impl Renderable {
         self
     }
 
-    pub fn with_perspective(mut self, matrix: Mat4, inverse: Mat4) -> Renderable {
-        self.perspective = Some((matrix, inverse));
+    pub fn with_perspective(mut self, matrix: Mat4) -> Renderable {
+        self.set_perspective(matrix);
         self
     }
 
-    pub fn with_view(mut self, matrix: Mat4, inverse: Mat4) -> Renderable {
-        self.view = Some((matrix, inverse));
+    pub fn with_view(mut self, matrix: Mat4) -> Renderable {
+        self.set_view(matrix);
         self
     }
 
-    pub fn with_model(mut self, matrix: Mat4, inverse: Mat4) -> Renderable {
-        self.model = Some((matrix, inverse));
+    pub fn with_model(mut self, matrix: Mat4) -> Renderable {
+        self.set_model(matrix);
         self
     }
 
@@ -148,16 +167,16 @@ impl Renderable {
         self.draw_method = Some(draw_method);
     }
 
-    pub fn set_perspective(&mut self, matrix: Mat4, inverse: Mat4) {
-        self.perspective = Some((matrix, inverse));
+    pub fn set_perspective(&mut self, matrix: Mat4) {
+        self.perspective = Some((matrix, matrix.to_inverse()));
     }
 
-    pub fn set_view(&mut self, matrix: Mat4, inverse: Mat4) {
-        self.view = Some((matrix, inverse));
+    pub fn set_view(&mut self, matrix: Mat4) {
+        self.view = Some((matrix, matrix.to_inverse()));
     }
 
-    pub fn set_model(&mut self, matrix: Mat4, inverse: Mat4) {
-        self.model = Some((matrix, inverse));
+    pub fn set_model(&mut self, matrix: Mat4) {
+        self.model = Some((matrix, matrix.to_inverse()));
     }
 
     pub fn set_vertex_id(&mut self, id: ID) {
