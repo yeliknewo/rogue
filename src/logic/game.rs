@@ -4,7 +4,7 @@ use time::{precise_time_s};
 use glium::glutin::Event as WindowEvent;
 
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
-use logic::{World, IDManager, EntityData};
+use logic::{World, IdManager, EntityData};
 use math::{Vec2};
 use graphics::{Window, Transforms};
 
@@ -15,11 +15,11 @@ pub struct Game<T: EntityData<T>> {
     mouse: Arc<RwLock<Mouse>>,
     keyboard: Arc<RwLock<Keyboard>>,
     transforms: Arc<RwLock<Transforms>>,
-    manager: Arc<RwLock<IDManager>>,
+    manager: Arc<RwLock<IdManager>>,
 }
 
 impl<T: EntityData<T>> Game<T> {
-    pub fn new(manager: Arc<RwLock<IDManager>>, thread_count: u32, resolution: Vec2) -> Game<T> {
+    pub fn new(manager: Arc<RwLock<IdManager>>, thread_count: u32, resolution: Vec2) -> Game<T> {
         let keyboard = Arc::new(RwLock::new(Keyboard::new()));
         let mouse = Arc::new(RwLock::new(Mouse::new()));
         let display = Arc::new(RwLock::new(Display::new(resolution)));

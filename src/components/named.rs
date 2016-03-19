@@ -1,6 +1,6 @@
 use std::sync::{Arc};
 
-use logic::{EntityData, World, ID};
+use logic::{EntityData, World, Id};
 
 pub struct Named {
     name: &'static str,
@@ -15,9 +15,9 @@ impl Named {
         }
     }
 
-    pub fn tick_mut<T: EntityData<T>>(&mut self, id: ID, world: Arc<World<T>>) {
+    pub fn tick_mut<T: EntityData<T>>(&mut self, id: Id, world: Arc<World<T>>) {
         if self.dirty {
-            world.register_name(id, self.name);
+            world.register_name(id, self.name).unwrap();
             self.dirty = false;
         }
     }

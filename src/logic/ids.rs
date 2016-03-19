@@ -3,26 +3,26 @@ use std::fmt::{Display, Formatter, Error};
 use std::sync::{Arc, RwLock};
 
 #[derive(Copy, Clone, Eq, Hash, PartialEq)]
-pub struct ID {
-    id: IDSize,
+pub struct Id {
+    id: IdSize,
 }
 
-impl ID {
-    pub fn new(manager: Arc<RwLock<IDManager>>, id_type: IDType) -> ID {
-        ID {
-            id: manager.write().expect("Unable to Write Manager in New in ID").get_id(id_type),
+impl Id {
+    pub fn new(manager: Arc<RwLock<IdManager>>, id_type: IdType) -> Id {
+        Id {
+            id: manager.write().expect("Unable to Write Manager in New in Id").get_id(id_type),
         }
     }
 }
 
-impl Display for ID {
+impl Display for Id {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error>{
         write!(f, "{}", self.id)
     }
 }
 
 #[derive(Copy, Clone, Eq, Hash, PartialEq)]
-pub enum IDType {
+pub enum IdType {
     World,
     Entity,
     Component,
@@ -35,18 +35,18 @@ pub enum IDType {
     Model,
 }
 
-pub struct IDManager {
-    map: HashMap<IDType, IDSize>,
+pub struct IdManager {
+    map: HashMap<IdType, IdSize>,
 }
 
-impl IDManager {
-    pub fn new() -> IDManager {
-        IDManager {
+impl IdManager {
+    pub fn new() -> IdManager {
+        IdManager {
             map: HashMap::new(),
         }
     }
 
-    fn get_id(&mut self, id_type: IDType) -> IDSize {
+    fn get_id(&mut self, id_type: IdType) -> IdSize {
         let id = match self.map.get(&id_type) {
             Some(id) => *id,
             None => 0,
@@ -56,4 +56,4 @@ impl IDManager {
     }
 }
 
-pub type IDSize = u64;
+pub type IdSize = u64;

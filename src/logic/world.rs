@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 use std::collections::{HashMap};
 
 use input::{Keyboard, Mouse, Display, KeyCode, MouseButton, Button};
-use logic::{ID, EntityData};
+use logic::{Id, EntityData};
 use math::{Vec2};
 use graphics::{Transforms};
 
@@ -11,8 +11,8 @@ pub struct World<T: EntityData<T>> {
     mouse: Arc<RwLock<Mouse>>,
     display: Arc<RwLock<Display>>,
     transforms: Arc<RwLock<Transforms>>,
-    entity_data: Arc<RwLock<HashMap<ID, Arc<RwLock<T>>>>>,
-    names: Arc<RwLock<HashMap<&'static str, ID>>>,
+    entity_data: Arc<RwLock<HashMap<Id, Arc<RwLock<T>>>>>,
+    names: Arc<RwLock<HashMap<&'static str, Id>>>,
 }
 
 impl<T: EntityData<T>> World<T> {
@@ -47,7 +47,7 @@ impl<T: EntityData<T>> World<T> {
         self.display.read().expect("Unable to Read Display in Get Aspect Ratio in World").get_aspect_ratio()
     }
 
-    pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<ID, Arc<RwLock<T>>>>> {
+    pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<Id, Arc<RwLock<T>>>>> {
         self.entity_data.clone()
     }
 
@@ -71,7 +71,7 @@ impl<T: EntityData<T>> World<T> {
         self.transforms.clone()
     }
 
-    pub fn register_name(&self, id: ID, name: &'static str) -> Result<(), &'static str>{
+    pub fn register_name(&self, id: Id, name: &'static str) -> Result<(), &'static str>{
         let mut names = self.names.write().expect("Unable to Write Names in Register Name in World");
         if names.contains_key(name) {
             return Err("Name Already in Use");

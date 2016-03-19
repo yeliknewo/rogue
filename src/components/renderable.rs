@@ -1,18 +1,18 @@
 use std::sync::{Arc, RwLock};
 
-use logic::{ID, IDManager, IDType, World, EntityData};
+use logic::{Id, IdManager, IdType, World, EntityData};
 use graphics::{Window, Vertex, Index, DrawMethod};
 use math::{Mat4};
 
 #[derive(Clone)]
 pub struct Renderable {
-    texture_id: ID,
-    vertex_id: ID,
-    index_id: ID,
-    draw_method_id: ID,
-    perspective_id: ID,
-    view_id: ID,
-    model_id: ID,
+    texture_id: Id,
+    vertex_id: Id,
+    index_id: Id,
+    draw_method_id: Id,
+    perspective_id: Id,
+    view_id: Id,
+    model_id: Id,
     vertices: Option<Vec<Vertex>>,
     indices: Option<Vec<Index>>,
     texture: Option<&'static [u8]>,
@@ -24,15 +24,15 @@ pub struct Renderable {
 }
 
 impl Renderable {
-    pub fn new(manager: Arc<RwLock<IDManager>>) -> Renderable {
+    pub fn new(manager: Arc<RwLock<IdManager>>) -> Renderable {
         Renderable {
-            texture_id: ID::new(manager.clone(), IDType::Texture),
-            vertex_id: ID::new(manager.clone(), IDType::Vertex),
-            index_id: ID::new(manager.clone(), IDType::Index),
-            draw_method_id: ID::new(manager.clone(), IDType::DrawMethod),
-            perspective_id: ID::new(manager.clone(), IDType::Perspective),
-            view_id: ID::new(manager.clone(), IDType::View),
-            model_id: ID::new(manager.clone(), IDType::Model),
+            texture_id: Id::new(manager.clone(), IdType::Texture),
+            vertex_id: Id::new(manager.clone(), IdType::Vertex),
+            index_id: Id::new(manager.clone(), IdType::Index),
+            draw_method_id: Id::new(manager.clone(), IdType::DrawMethod),
+            perspective_id: Id::new(manager.clone(), IdType::Perspective),
+            view_id: Id::new(manager.clone(), IdType::View),
+            model_id: Id::new(manager.clone(), IdType::Model),
             vertices: None,
             indices: None,
             texture: None,
@@ -172,94 +172,94 @@ impl Renderable {
         self.dirty = true;
     }
 
-    pub fn with_vertex_id(mut self, id: ID) -> Renderable {
+    pub fn with_vertex_id(mut self, id: Id) -> Renderable {
         self.set_vertex_id(id);
         self
     }
 
-    pub fn with_index_id(mut self, id: ID) -> Renderable {
+    pub fn with_index_id(mut self, id: Id) -> Renderable {
         self.set_index_id(id);
         self
     }
 
-    pub fn with_texture_id(mut self, id: ID) -> Renderable {
+    pub fn with_texture_id(mut self, id: Id) -> Renderable {
         self.set_texture_id(id);
         self
     }
 
-    pub fn with_draw_method_id(mut self, id: ID) -> Renderable {
+    pub fn with_draw_method_id(mut self, id: Id) -> Renderable {
         self.set_draw_method_id(id);
         self
     }
 
-    pub fn with_perspective_id(mut self, id: ID) -> Renderable {
+    pub fn with_perspective_id(mut self, id: Id) -> Renderable {
         self.set_perspective_id(id);
         self
     }
 
-    pub fn with_view_id(mut self, id: ID) -> Renderable {
+    pub fn with_view_id(mut self, id: Id) -> Renderable {
         self.set_view_id(id);
         self
     }
 
-    pub fn with_model_id(mut self, id: ID) -> Renderable {
+    pub fn with_model_id(mut self, id: Id) -> Renderable {
         self.set_model_id(id);
         self
     }
 
-    pub fn set_vertex_id(&mut self, id: ID) {
+    pub fn set_vertex_id(&mut self, id: Id) {
         self.vertex_id = id;
     }
 
-    pub fn set_index_id(&mut self, id: ID) {
+    pub fn set_index_id(&mut self, id: Id) {
         self.index_id = id;
     }
 
-    pub fn set_texture_id(&mut self, id: ID) {
+    pub fn set_texture_id(&mut self, id: Id) {
         self.texture_id = id;
     }
 
-    pub fn set_draw_method_id(&mut self, id: ID) {
+    pub fn set_draw_method_id(&mut self, id: Id) {
         self.draw_method_id = id;
     }
 
-    pub fn set_perspective_id(&mut self, id: ID) {
+    pub fn set_perspective_id(&mut self, id: Id) {
         self.perspective_id = id;
     }
 
-    pub fn set_view_id(&mut self, id: ID) {
+    pub fn set_view_id(&mut self, id: Id) {
         self.view_id = id;
     }
 
-    pub fn set_model_id(&mut self, id: ID) {
+    pub fn set_model_id(&mut self, id: Id) {
         self.model_id = id;
     }
 
-    pub fn get_vertex_id(&self) -> ID {
+    pub fn get_vertex_id(&self) -> Id {
         self.vertex_id
     }
 
-    pub fn get_index_id(&self) -> ID {
+    pub fn get_index_id(&self) -> Id {
         self.index_id
     }
 
-    pub fn get_texture_id(&self) -> ID {
+    pub fn get_texture_id(&self) -> Id {
         self.texture_id
     }
 
-    pub fn get_draw_method_id(&self) -> ID {
+    pub fn get_draw_method_id(&self) -> Id {
         self.draw_method_id
     }
 
-    pub fn get_perspective_id(&self) -> ID {
+    pub fn get_perspective_id(&self) -> Id {
         self.perspective_id
     }
 
-    pub fn get_view_id(&self) -> ID {
+    pub fn get_view_id(&self) -> Id {
         self.view_id
     }
 
-    pub fn get_model_id(&self) -> ID {
+    pub fn get_model_id(&self) -> Id {
         self.model_id
     }
 }

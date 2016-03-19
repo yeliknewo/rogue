@@ -9,17 +9,17 @@ use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
 
 use math::{Vec2};
-use logic::{ID};
+use logic::{Id};
 use graphics::{Vertex, Index, Transforms, DrawMethod, method_to_parameters};
 use components::{Renderable};
 
 pub struct Window {
     facade: GlutinFacade,
     program: Program,
-    texture_buffers: HashMap<ID, Texture2d>,
-    vertex_buffers: HashMap<ID, VertexBuffer<Vertex>>,
-    index_buffers: HashMap<ID, IndexBuffer<Index>>,
-    draw_parameters: HashMap<ID, DrawParameters<'static>>,
+    texture_buffers: HashMap<Id, Texture2d>,
+    vertex_buffers: HashMap<Id, VertexBuffer<Vertex>>,
+    index_buffers: HashMap<Id, IndexBuffer<Index>>,
+    draw_parameters: HashMap<Id, DrawParameters<'static>>,
     resolution: (u32, u32),
 }
 
@@ -111,20 +111,20 @@ impl Window {
         self.facade.poll_events()
     }
 
-    pub fn set_vertices(&mut self, id: ID, vertices: Vec<Vertex>) {
+    pub fn set_vertices(&mut self, id: Id, vertices: Vec<Vertex>) {
         self.vertex_buffers.insert(id, VertexBuffer::new(&self.facade, &vertices).expect("Failed to Create Vertex Buffer"));
     }
 
-    pub fn set_indices(&mut self, id: ID, indices: Vec<Index>) {
+    pub fn set_indices(&mut self, id: Id, indices: Vec<Index>) {
         self.index_buffers.insert(id, IndexBuffer::new(&self.facade, glium::index::PrimitiveType::TrianglesList, &indices).expect("Failed to Create Index Buffer"));
     }
 
-    pub fn set_texture(&mut self, id: ID, data: &[u8]) {
+    pub fn set_texture(&mut self, id: Id, data: &[u8]) {
         let texture = load_from_memory(data).expect("Error Loading Image").to_rgba();
         self.texture_buffers.insert(id, Texture2d::new(&self.facade, RawImage2d::from_raw_rgba_reversed(texture.clone().into_raw(), texture.dimensions())).expect("Unable to make Texture"));
     }
 
-    pub fn set_draw_method(&mut self, id: ID, draw_method: DrawMethod) {
+    pub fn set_draw_method(&mut self, id: Id, draw_method: DrawMethod) {
         self.draw_parameters.insert(id, method_to_parameters(draw_method));
     }
 }
@@ -136,10 +136,10 @@ pub enum WindowArgs {
 
 pub struct Frame<'a> {
     program: &'a mut Program,
-    texture_buffers: &'a mut HashMap<ID, Texture2d>,
-    vertex_buffers: &'a mut HashMap<ID, VertexBuffer<Vertex>>,
-    index_buffers: &'a mut HashMap<ID, IndexBuffer<Index>>,
-    draw_parameters: &'a mut HashMap<ID, DrawParameters<'static>>,
+    texture_buffers: &'a mut HashMap<Id, Texture2d>,
+    vertex_buffers: &'a mut HashMap<Id, VertexBuffer<Vertex>>,
+    index_buffers: &'a mut HashMap<Id, IndexBuffer<Index>>,
+    draw_parameters: &'a mut HashMap<Id, DrawParameters<'static>>,
     frame: glium::Frame,
 }
 
@@ -147,10 +147,10 @@ impl<'a> Frame<'a> {
     fn new(
         facade: &'a mut GlutinFacade,
         program: &'a mut Program,
-        texture_buffers: &'a mut HashMap<ID, Texture2d>,
-        vertex_buffers: &'a mut HashMap<ID, VertexBuffer<Vertex>>,
-        index_buffers: &'a mut HashMap<ID, IndexBuffer<Index>>,
-        draw_parameters: &'a mut HashMap<ID, DrawParameters<'static>>,
+        texture_buffers: &'a mut HashMap<Id, Texture2d>,
+        vertex_buffers: &'a mut HashMap<Id, VertexBuffer<Vertex>>,
+        index_buffers: &'a mut HashMap<Id, IndexBuffer<Index>>,
+        draw_parameters: &'a mut HashMap<Id, DrawParameters<'static>>,
     ) -> Frame<'a> {
         let mut frame = facade.draw();
         frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
@@ -164,7 +164,7 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn draw_entity(&mut self, entity_arc: Box<Arc<RwLock<Renderable>>>, transforms: Arc<RwLock<Transforms>>) {
+    pub fn draw_entity(&mut self, entity_arc: Arc<RwLock<Renderable>>, transforms: Arc<RwLock<Transforms>>) {
         let entity = entity_arc.read().expect("Unable to Read Entity in Draw Entity");
         self.frame.draw(
             self.vertex_buffers.get(&entity.get_vertex_id()).expect("Unable to Get Vertex Buffer in Draw Entity"),
