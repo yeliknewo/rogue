@@ -46,9 +46,9 @@ impl Transforms {
         *self.perspective_mat4s_inverse.read().expect("Unable to Read Perspective Inverse in Transforms").get(&entity.get_perspective_id()).expect("Unable to Get Perspective Inverse in Get Perspective Inverse")
     }
 
-    pub fn set_perspective_matrix(&self, entity: &Renderable, perspective: Mat4, inverse: Mat4) {
-        self.perspective_mat4s.write().expect("Unable to Write Perspective Matrix in Set Perspective Matrix in Transforms").insert(entity.get_perspective_id(), perspective);
-        self.perspective_mat4s_inverse.write().expect("Unable to Write Perspective Inverse in Set Perspective Matrix in Transforms").insert(entity.get_perspective_id(), inverse);
+    pub fn set_perspective_matrix(&self, id: ID, perspective: Mat4, inverse: Mat4) {
+        self.perspective_mat4s.write().expect("Unable to Write Perspective Matrix in Set Perspective Matrix in Transforms").insert(id, perspective);
+        self.perspective_mat4s_inverse.write().expect("Unable to Write Perspective Inverse in Set Perspective Matrix in Transforms").insert(id, inverse);
     }
 
     pub fn get_view_matrix(&self, entity: &Renderable) -> Mat4 {
@@ -59,9 +59,9 @@ impl Transforms {
         *self.view_mat4s_inverse.read().expect("Unable to Read View Inverse in Get View Inverse in Transforms").get(&entity.get_view_id()).expect("Unable to Get View Inverse in Get View Inverse")
     }
 
-    pub fn set_view_matrix(&self, entity: &Renderable, view: Mat4, inverse: Mat4) {
-        self.view_mat4s.write().expect("Unable to Write View Matrix in Set View Matrix in Transforms").insert(entity.get_view_id(), view);
-        self.view_mat4s_inverse.write().expect("Unable to Write View Inverse in Set View Matrix in Transforms").insert(entity.get_view_id(), inverse);
+    pub fn set_view_matrix(&self, id: ID, view: Mat4, inverse: Mat4) {
+        self.view_mat4s.write().expect("Unable to Write View Matrix in Set View Matrix in Transforms").insert(id, view);
+        self.view_mat4s_inverse.write().expect("Unable to Write View Inverse in Set View Matrix in Transforms").insert(id, inverse);
     }
 
     pub fn get_model_matrix(&self, entity: &Renderable) -> Mat4 {
@@ -72,8 +72,8 @@ impl Transforms {
         *self.model_mat4s_inverse.read().expect("Unable to Read Model Inverse in Get Model Inverse in Transforms").get(&entity.get_model_id()).expect("Unable to Get Model Inverse in Get Model Inverse")
     }
 
-    pub fn set_model_matrix(&self, entity: &Renderable, model: Mat4, inverse: Mat4) {
-        self.model_mat4s.write().expect("Unable to Write Model Matrix in Set Model Matrix in Transforms").insert(entity.get_model_id(), model);
-        self.model_mat4s_inverse.write().expect("Unable to Write Model Inverse in Set Model Matrix in Transforms").insert(entity.get_model_id(), inverse);
+    pub fn set_model_matrix(&self, id: ID, model: Mat4, inverse: Mat4) {
+        self.model_mat4s.write().expect("Unable to Write Model Matrix in Set Model Matrix in Transforms").insert(id, model);
+        self.model_mat4s_inverse.write().expect("Unable to Write Model Inverse in Set Model Matrix in Transforms").insert(id, inverse);
     }
 }

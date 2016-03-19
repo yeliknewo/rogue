@@ -149,7 +149,7 @@ impl<T: EntityData<T>> Game<T> {
         for entry in entity_data.iter() {
             let entity = entry.1;
             let mut entity = entity.write().expect("Unable to Write Entity in Render in Game");
-            entity.render(window);
+            entity.render(window, world.clone());
         }
         let mut frame = window.frame();
         for entry in entity_data.iter() {

@@ -10,7 +10,7 @@ use std::sync::{Arc, RwLock};
 
 use math::{Vec2};
 use logic::{ID};
-use graphics::{Vertex, Index, Transforms};
+use graphics::{Vertex, Index, Transforms, DrawMethod, method_to_parameters};
 use componenents::{Renderable};
 
 pub struct Window {
@@ -124,8 +124,8 @@ impl Window {
         self.texture_buffers.insert(id, Texture2d::new(&self.facade, RawImage2d::from_raw_rgba_reversed(texture.clone().into_raw(), texture.dimensions())).expect("Unable to make Texture"));
     }
 
-    pub fn set_draw_parameters(&mut self, id: ID, draw_parameters: DrawParameters<'static>) {
-        self.draw_parameters.insert(id, draw_parameters);
+    pub fn set_draw_method(&mut self, id: ID, draw_method: DrawMethod) {
+        self.draw_parameters.insert(id, method_to_parameters(draw_method));
     }
 }
 
@@ -176,7 +176,7 @@ impl<'a> Frame<'a> {
                 view: transforms.read().expect("Unable to Read Transforms in Draw Entity In Frame").get_view_matrix(&entity),
                 model: transforms.read().expect("Unable to Read Transforms in Draw Entity in Frame").get_model_matrix(&entity),
             ),
-            self.draw_parameters.get(&entity.get_draw_parameters_id()).expect("Unable to Get Draw Parameter in Draw Entity"))
+            self.draw_parameters.get(&entity.get_draw_method_id()).expect("Unable to Get Draw Method in Draw Entity"))
             .expect("Unable to draw Entity");
     }
 

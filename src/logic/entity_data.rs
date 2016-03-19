@@ -7,6 +7,6 @@ use componenents::{Renderable};
 pub trait EntityData<T: EntityData<T>> : Send  + Sync {
     fn tick(&self, Arc<f64>, Arc<World<T>>);
     fn tick_mut(&mut self, Arc<RwLock<IDManager>>, Arc<World<T>>);
-    fn render(&mut self, &mut Window);
+    fn render(&mut self, &mut Window, Arc<World<T>>);
     fn get_graphics_data(&self) -> Option<Box<Arc<RwLock<Renderable>>>>;
 }

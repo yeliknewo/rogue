@@ -18,7 +18,7 @@ mod componenents;
 pub use self::math::{Mat4, Vec2, Vec3, Vec4};
 pub use self::input::{Keyboard, Mouse, Display};
 pub use self::logic::{IDManager, Game, World, ID, IDType, EntityData};
-pub use self::graphics::{Window, WindowArgs};
+pub use self::graphics::{Window, WindowArgs, DrawMethod, CullingMethod, DepthTestMethod, Vertex, Index};
 pub use self::componenents::{Transform, Renderable};
 
 use std::sync::{Arc, RwLock};

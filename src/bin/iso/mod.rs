@@ -1,5 +1,8 @@
 use std::sync::{Arc, RwLock};
-use dorp::{init, Game, Window, WindowArgs, EntityData, World, IDManager, ID, IDType, Vec3, Transform, Renderable};
+use dorp::{init, Game, Window, WindowArgs, EntityData, World, IDManager, ID, IDType, Mat4, Vec2, Vec3, Transform, Renderable, DrawMethod, DepthTestMethod, CullingMethod, Vertex};
+
+static STONE_TEXTURE: &'static [u8] = include_bytes!("../../../assets/brick.png");
+static WOOD_TEXTURE: &'static [u8] = include_bytes!("../../../assets/wood.png");
 
 pub fn main() {
     let manager = init();
@@ -20,6 +23,21 @@ pub fn main() {
             IsoData::new()
             .with_renderable(
                 Renderable::new(manager.clone())
+                .with_vertices(vec!(
+                    Vertex::from(Vec2::from([0.0, 0.0])),
+                    Vertex::from(Vec2::from([1.0, 0.0])),
+                    Vertex::from(Vec2::from([1.0, 1.0])),
+                    Vertex::from(Vec2::from([0.0, 1.0])),
+                ))
+                .with_indices(vec!(
+                    0, 1, 2,
+                    2, 3, 0,
+                ))
+                .with_texture(STONE_TEXTURE)
+                .with_draw_method(DrawMethod::Both(DepthTestMethod::IfLess, CullingMethod::Clockwise))
+                .with_perspective(Mat4::identity(), Mat4::identity())
+                .with_view(Mat4::identity(), Mat4::identity())
+                .with_model(Mat4::identity(), Mat4::identity())
             )
             .with_transform(
                 Transform::new()
@@ -66,10 +84,10 @@ impl EntityData<IsoData> for IsoData {
 
     }
 
-    fn render(&mut self, window: &mut Window) {
+    fn render(&mut self, window: &mut Window, world: Arc<World<IsoData>>) {
         match self.renderable.clone() {
             Some(renderable) => {
-                renderable.write().expect("Unable to Write Renderable in Render in IsoData").render(window);
+                renderable.write().expect("Unable to Write Renderable in Render in IsoData").render(window, world);
             },
             None => (),
         }

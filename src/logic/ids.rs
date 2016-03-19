@@ -29,7 +29,7 @@ pub enum IDType {
     Vertex,
     Index,
     Texture,
-    DrawParameter,
+    DrawMethod,
     Perspective,
     View,
     Model,

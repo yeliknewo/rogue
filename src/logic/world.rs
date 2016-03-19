@@ -48,4 +48,8 @@ impl<T: EntityData<T>> World<T> {
     pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<ID, Arc<RwLock<T>>>>> {
         self.entity_data.clone()
     }
+
+    pub fn get_transforms(&self) -> Arc<RwLock<Transforms>> {
+        self.transforms.clone()
+    }
 }
