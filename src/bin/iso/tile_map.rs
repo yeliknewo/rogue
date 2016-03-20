@@ -29,4 +29,17 @@ impl TileMap {
             return self.register_tile(x, y, id);
         }
     }
+
+    pub fn get_at(&self, x: i32, y: i32) -> Option<&Id> {
+        if self.map.contains_key(&y) {
+            let y_map = self.map.get(&y).unwrap();
+            if y_map.contains_key(&x) {
+                y_map.get(&x)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
