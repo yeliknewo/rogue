@@ -7,13 +7,19 @@ use dorp::{init, Game, Window, WindowArgs, Id, IdType, Mat4, Vec3,
 static STONE_TEXTURE: &'static [u8] = include_bytes!("../../../assets/brick.png");
 static WOOD_TEXTURE: &'static [u8] = include_bytes!("../../../assets/wood.png");
 
+static TILE_MAP_NAME: &'static str = "TileMap";
+
 mod iso_data;
 mod tile;
 mod item;
+mod being;
+mod tile_map;
 
-use self::iso_data::{IsoData};
-use self::tile::{Tile};
-use self::item::{Item, ItemType};
+pub use self::iso_data::{IsoData};
+pub use self::tile::{Tile};
+pub use self::item::{Item, ItemType};
+pub use self::being::{Being};
+pub use self::tile_map::{TileMap};
 
 pub fn main() {
     let manager = init();
@@ -30,6 +36,12 @@ pub fn main() {
     let data = world.get_entity_data();
     {
         let mut data = data.write().expect("Unable to Write Entity Data in Main in Iso");
+        let id = Id::new(manager.clone(), IdType::Entity);
+        data.insert(id, Arc::new(RwLock::new(
+            IsoData::new(id)
+            .with_named(Named::new(TILE_MAP_NAME))
+            .with_tile_map(TileMap::new())
+        )));
         let tile_graphics = Renderable::new(manager.clone())
             .with_vertices(vec!(
                 Vertex::new([0.0, 0.0, 0.0], [0.0, 0.0]),
@@ -87,12 +99,12 @@ pub fn main() {
                             .with_scalation(Vec3::one())
                         )
                         .with_tile(
-                            Tile::new()
-                            .with_item(item_id)
+                            Tile::new(TILE_MAP_NAME, x, z)
+                            .with_on_tile(item_id)
                         )
                     )));
                     has_item = false;
-                }else {
+                } else {
                     data.insert(id, Arc::new(RwLock::new(
                         IsoData::new(id)
                         .with_renderable(
@@ -107,7 +119,7 @@ pub fn main() {
                             .with_scalation(Vec3::one())
                         )
                         .with_tile(
-                            Tile::new()
+                            Tile::new(TILE_MAP_NAME, x, z)
                         )
                     )));
                 }

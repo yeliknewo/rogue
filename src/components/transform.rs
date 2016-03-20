@@ -28,7 +28,7 @@ impl Transform {
         }
     }
 
-    pub fn tick_mut(&mut self, renderable: Arc<RwLock<Renderable>>) {
+    pub fn tick_mut(&mut self) {
         if self.dirty {
             match self.new_position.clone() {
                 Some(pos) => {
@@ -53,6 +53,9 @@ impl Transform {
             }
             self.dirty = false;
         }
+    }
+
+    pub fn render_sync(&mut self, renderable: Arc<RwLock<Renderable>>) {
         if self.dirty_matrix {
             let mut renderable = renderable.write().expect("Unable to Write Renderable in Tick Mut in Transform");
             renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position));

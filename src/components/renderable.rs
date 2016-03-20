@@ -21,6 +21,7 @@ pub struct Renderable {
     view: Option<(Mat4, Mat4)>,
     model: Option<(Mat4, Mat4)>,
     dirty: bool,
+    dirty_sync: bool,
 }
 
 impl Renderable {
@@ -41,6 +42,37 @@ impl Renderable {
             view: None,
             model: None,
             dirty: false,
+            dirty_sync: false,
+        }
+    }
+
+    pub fn render_sync<T: EntityData<T>>(&mut self, world: Arc<World<T>>) {
+        if self.dirty_sync {
+            match self.perspective.clone() {
+                Some(perspective) => {
+                    let transforms = world.get_transforms();
+                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_perspective_matrix(self.perspective_id, perspective.0, perspective.1);
+                    self.perspective = None;
+                },
+                None => (),
+            }
+            match self.view.clone() {
+                Some(view) => {
+                    let transforms = world.get_transforms();
+                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_view_matrix(self.view_id, view.0, view.1);
+                    self.view = None;
+                },
+                None => (),
+            }
+            match self.model.clone() {
+                Some(model) => {
+                    let transforms = world.get_transforms();
+                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_model_matrix(self.model_id, model.0, model.1);
+                    self.model = None;
+                },
+                None => (),
+            }
+            self.dirty_sync = false;
         }
     }
 
@@ -71,30 +103,6 @@ impl Renderable {
                 Some(draw_method) => {
                     window.set_draw_method(self.draw_method_id, draw_method);
                     self.draw_method = None;
-                },
-                None => (),
-            }
-            match self.perspective.clone() {
-                Some(perspective) => {
-                    let transforms = world.get_transforms();
-                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_perspective_matrix(self.perspective_id, perspective.0, perspective.1);
-                    self.perspective = None;
-                },
-                None => (),
-            }
-            match self.view.clone() {
-                Some(view) => {
-                    let transforms = world.get_transforms();
-                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_view_matrix(self.view_id, view.0, view.1);
-                    self.view = None;
-                },
-                None => (),
-            }
-            match self.model.clone() {
-                Some(model) => {
-                    let transforms = world.get_transforms();
-                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_model_matrix(self.model_id, model.0, model.1);
-                    self.model = None;
                 },
                 None => (),
             }
@@ -159,17 +167,17 @@ impl Renderable {
 
     pub fn set_perspective(&mut self, matrix: Mat4) {
         self.perspective = Some((matrix, matrix.to_inverse()));
-        self.dirty = true;
+        self.dirty_sync = true;
     }
 
     pub fn set_view(&mut self, matrix: Mat4) {
         self.view = Some((matrix, matrix.to_inverse()));
-        self.dirty = true;
+        self.dirty_sync = true;
     }
 
     pub fn set_model(&mut self, matrix: Mat4) {
         self.model = Some((matrix, matrix.to_inverse()));
-        self.dirty = true;
+        self.dirty_sync = true;
     }
 
     pub fn with_vertex_id(mut self, id: Id) -> Renderable {

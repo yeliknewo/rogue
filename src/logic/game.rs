@@ -146,6 +146,15 @@ impl<T: EntityData<T>> Game<T> {
         let world = self.world.clone();
         let entity_data = world.get_entity_data();
         let entity_data = entity_data.read().expect("Unable to Read Entity Data in Render in Game");
+        self.thread_pool.scoped(|scope| {
+            for entry in entity_data.iter() {
+                let entity = entry.1.clone();
+                let world = world.clone();
+                scope.execute(move || {
+                    entity.write().expect("Unable to Write Entity in Tick in Game").render_sync(world);
+                });
+            }
+        });
         for entry in entity_data.iter() {
             let entity = entry.1;
             let mut entity = entity.write().expect("Unable to Write Entity in Render in Game");

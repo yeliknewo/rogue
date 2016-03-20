@@ -1,16 +1,17 @@
 use std::sync::{Arc, RwLock};
 use dorp::{Transform, Renderable, Named, Id, EntityData, IdManager, World, Window};
 
-use iso::item::{Item};
-use iso::tile::{Tile};
+use iso::{Being, Item, Tile, TileMap};
 
 pub struct IsoData {
     id: Id,
     transform: Option<Arc<RwLock<Transform>>>,
     renderable: Option<Arc<RwLock<Renderable>>>,
     named: Option<Arc<RwLock<Named>>>,
+    tile_map: Option<Arc<RwLock<TileMap>>>,
     tile: Option<Arc<RwLock<Tile>>>,
     item: Option<Arc<RwLock<Item>>>,
+    being: Option<Arc<RwLock<Being>>>,
 }
 
 impl IsoData {
@@ -20,8 +21,10 @@ impl IsoData {
             transform: None,
             renderable: None,
             named: None,
+            tile_map: None,
             tile: None,
             item: None,
+            being: None,
         }
     }
 
@@ -40,6 +43,11 @@ impl IsoData {
         self
     }
 
+    pub fn with_tile_map(mut self, tile_map: TileMap) -> IsoData {
+        self.tile_map = Some(Arc::new(RwLock::new(tile_map)));
+        self
+    }
+
     pub fn with_tile(mut self, tile: Tile) -> IsoData {
         self.tile = Some(Arc::new(RwLock::new(tile)));
         self
@@ -50,6 +58,15 @@ impl IsoData {
         self
     }
 
+    pub fn with_being(mut self, being: Being) -> IsoData {
+        self.being = Some(Arc::new(RwLock::new(being)));
+        self
+    }
+
+    pub fn get_tile_map(&self) -> Option<Arc<RwLock<TileMap>>> {
+        self.tile_map.clone()
+    }
+
     pub fn get_tile(&self) -> Option<Arc<RwLock<Tile>>> {
         self.tile.clone()
     }
@@ -57,30 +74,29 @@ impl IsoData {
     pub fn get_item(&self) -> Option<Arc<RwLock<Item>>> {
         self.item.clone()
     }
+
+    pub fn get_being(&self) -> Option<Arc<RwLock<Being>>> {
+        self.being.clone()
+    }
 }
 
 impl EntityData<IsoData> for IsoData {
     fn tick(&self, delta_time: Arc<f64>, world: Arc<World<IsoData>>) {
-        match world.get_entity_by_name("Item") {
-            Some(entity) => {
-                let entity = entity.read().expect("Unable to Read Entity in Tick in IsoData");
-                let transform = entity
-                .get_transform().expect("Unable to Get Transform");
-                let position = transform
-                .read().expect("Unable to Read Transform in Tick in IsoData").get_position();
-                println!("{}", position);
-            },
-            None => (),
-        }
-        match self.tile.clone() {
-            Some(tile) => {
-                tile.write().expect("Unable to Write Tile in Tick in IsoData").tick(self.get_transform(), world.clone());
-            },
-            None => (),
-        }
+
     }
 
     fn tick_mut(&mut self, manager: Arc<RwLock<IdManager>>, world: Arc<World<IsoData>>) {
+        match self.tile.clone() {
+            Some(tile) => {
+                match self.transform.clone() {
+                    Some(transform) => {
+                        tile.write().expect("Unable to Write Tile in Tick in IsoData").tick_mut(self.get_id(), transform, world.clone());
+                    },
+                    None => panic!("Tile has no Transform in Tick Mut in IsoData"),
+                }
+            },
+            None => (),
+        }
         match self.named.clone() {
             Some(named) => {
                 named.write().expect("Unable to Write Named in Tick Mut in IsoData").tick_mut(self.get_id(), world.clone());
@@ -89,9 +105,19 @@ impl EntityData<IsoData> for IsoData {
         }
         match self.transform.clone() {
             Some(transform) => {
-                match self.renderable.clone() {
-                    Some(renderable) => {
-                        transform.write().expect("Unable to Write Transform in Tick Mut in IsoData").tick_mut(renderable);
+                transform.write().expect("Unable to Write Transform in Tick Mut in IsoData").tick_mut();
+            },
+            None => (),
+        }
+    }
+
+    fn render_sync(&mut self, world: Arc<World<IsoData>>) {
+        match self.renderable.clone() {
+            Some(renderable) => {
+                renderable.write().expect("Unable to Write Renderable in Render Sync in IsoData").render_sync(world);
+                match self.transform.clone() {
+                    Some(transform) => {
+                        transform.write().expect("Unable to Write Transform in Render Sync in IsoData").render_sync(renderable);
                     },
                     None => (),
                 }
