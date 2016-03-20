@@ -5,7 +5,6 @@ use iso::{IsoData};
 
 pub struct Tile {
     on_tile: Vec<Id>,
-    tile_map_name: Option<&'static str>,
     dirty: bool,
     x: i32,
     y: i32,
@@ -14,15 +13,32 @@ pub struct Tile {
 }
 
 impl Tile {
-    pub fn new(tile_map_name: &'static str, x: i32, y: i32) -> Tile {
+    pub fn new(id: Id, tile_map_name: &'static str, x: i32, y: i32, world: Arc<World<IsoData>>) -> Tile {
+        let mut new_touching = vec!();
+        let entity = world.get_entity_by_name(tile_map_name).expect("Unable to Get Entity by Name in Tick Mut in Tile");
+        let entity = entity.read().expect("Unable to Read Entity in Tick Mut in Tile");
+        let tile_map = entity.get_tile_map().expect("Unable to Find Tile Map in Tick Mut in Tile");
+        tile_map.write().expect("Unable to Write Tile Map in Tick mut in Tile").register_tile(x, y, id).unwrap();
+        let tile_map = tile_map.read().expect("Unable to Write Tile Map in Tick mut in Tile");
+        for x in -1..2 {
+            for y in -1..2 {
+                if x != 0 && y != 0 {
+                    match tile_map.get_at(x + x, y + x) {
+                        Some(tile) => {
+                            new_touching.push(*tile);
+                        },
+                        None => (),
+                    }
+                }
+            }
+        }
         Tile {
             on_tile: vec!(),
-            tile_map_name: Some(tile_map_name),
             dirty: false,
             x: x,
             y: y,
             touching: vec!(),
-            new_touching: vec!(),
+            new_touching: new_touching,
         }
     }
 
@@ -30,43 +46,11 @@ impl Tile {
         for t in self.touching.iter() {
             println!(" {} ", t);
         }
-        match self.tile_map_name {
-            Some(tile_map_name) => {
-                let entity = world.get_entity_by_name(tile_map_name).expect("Unable to Get Entity by Name in Tick Mut in Tile");
-                let entity = entity.read().expect("Unable to Read Entity in Tick Mut in Tile");
-                let tile_map = entity.get_tile_map().expect("Unable to Find Tile Map in Tick Mut in Tile");
-                let tile_map = tile_map.read().expect("Unable to Write Tile Map in Tick mut in Tile");
-                for x in -1..2 {
-                    for y in -1..2 {
-                        if x != 0 && y != 0 {
-                            match tile_map.get_at(self.x + x, self.y + x) {
-                                Some(tile) => {
-                                    self.new_touching.push(*tile);
-                                },
-                                None => (),
-                            }
-                        }
-                    }
-                }
-                self.tile_map_name = None;
-            },
-            None => (),
-        }
     }
 
     pub fn tick_mut(&mut self, my_id: Id, my_transform: Arc<RwLock<Transform>>, world: Arc<World<IsoData>>) {
         if !self.new_touching.is_empty() {
             self.touching = self.new_touching.to_vec();
-        }
-        match self.tile_map_name {
-            Some(tile_map_name) => {
-                let entity = world.get_entity_by_name(tile_map_name).expect("Unable to Get Entity by Name in Tick Mut in Tile");
-                let entity = entity.read().expect("Unable to Read Entity in Tick Mut in Tile");
-                let tile_map = entity.get_tile_map().expect("Unable to Find Tile Map in Tick Mut in Tile");
-                tile_map.write().expect("Unable to Write Tile Map in Tick mut in Tile").register_tile(self.x, self.y, my_id).unwrap();
-                self.tile_map_name = None;
-            },
-            None => (),
         }
         if self.dirty {
             let entity_data = world.get_entity_data();

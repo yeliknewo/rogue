@@ -99,7 +99,7 @@ pub fn main() {
                             .with_scalation(Vec3::one())
                         )
                         .with_tile(
-                            Tile::new(TILE_MAP_NAME, x, z)
+                            Tile::new(id, TILE_MAP_NAME, x, z, world.clone())
                             .with_on_tile(item_id)
                         )
                     )));
@@ -119,7 +119,7 @@ pub fn main() {
                             .with_scalation(Vec3::one())
                         )
                         .with_tile(
-                            Tile::new(TILE_MAP_NAME, x, z)
+                            Tile::new(id, TILE_MAP_NAME, x, z, world.clone())
                         )
                     )));
                 }
