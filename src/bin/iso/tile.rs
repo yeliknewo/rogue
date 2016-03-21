@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 use dorp::{Vec3, Id, World, EntityData, Transform};
 
 use iso::{IsoData, TileCoordinates};
@@ -26,17 +26,15 @@ impl Changes {
 pub struct Tile {
     on_tile: Vec<Id>,
     touching: Vec<Id>,
-    changes: Arc<RwLock<Changes>>
+    //changes: Arc<RwLock<Changes>>
 }
 
 impl Tile {
-    pub fn new(id: Id, tile_map_name: &'static str, tile_coordinates: Arc<RwLock<TileCoordinates>>, world: Arc<World<IsoData>>) -> Tile {
+    pub fn new(id: Id, tile_map_name: &'static str, tile_coordinates: Arc<TileCoordinates>, world: Arc<World<IsoData>>) -> Tile {
         let mut new_touching = vec!();
         let entity = world.get_entity_by_name(tile_map_name).expect("Unable to Get Entity by Name in Tick Mut in Tile");
         let tile_map = entity.get_tile_map().expect("Unable to Find Tile Map in Tick Mut in Tile");
-        let tile_coordinates = tile_coordinates.read().expect("Unable to Read Tile Coordinates in New in Tile");
-        tile_map.write().expect("Unable to Write Tile Map in Tick mut in Tile").register_tile_coords(tile_coordinates.get_coords(), id).unwrap();
-        let tile_map = tile_map.read().expect("Unable to Write Tile Map in Tick mut in Tile");
+        Arc::get_mut(&mut tile_map).expect("Unable to Write Tile Map in Tick mut in Tile").register_tile_coords(tile_coordinates.get_coords(), id).unwrap();
         for x in -1..2 {
             for y in -1..2 {
                 if x != 0 && y != 0 {
@@ -52,11 +50,11 @@ impl Tile {
         Tile {
             on_tile: vec!(),
             touching: vec!(),
-            changes: Arc::new(RwLock::new(Changes::new())),
+            //changes: Arc::new(RwLock::new(Changes::new())),
         }
     }
 
-    pub fn tick_mut(&mut self, my_transform: Arc<RwLock<Transform>>, world: Arc<World<IsoData>>) {
+    pub fn tick_mut(&mut self, my_transform: Arc<Transform>, world: Arc<World<IsoData>>) {
         let mut changes = self.changes.write().expect("Unable to Write Changes in Tick Mut in Tile");
         if changes.dirty {
             self.on_tile.append(&mut changes.on_tile);

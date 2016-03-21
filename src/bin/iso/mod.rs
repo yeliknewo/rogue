@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 
 use dorp::{init, Game, Window, WindowArgs, Id, IdType, Mat4, Vec3,
      DEG_TO_RAD, Transform, Renderable, DrawMethod, DepthTestMethod, CullingMethod, Vertex,

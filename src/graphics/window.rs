@@ -6,7 +6,7 @@ use glium::{Surface, DisplayBuild, Program, VertexBuffer, IndexBuffer, DrawParam
 use glium;
 use image::{load_from_memory};
 use std::collections::{HashMap};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 
 use math::{Vec2};
 use logic::{Id};
@@ -164,17 +164,16 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn draw_entity(&mut self, entity_arc: Arc<RwLock<Renderable>>, transforms: Arc<RwLock<Transforms>>) {
-        let entity = entity_arc.read().expect("Unable to Read Entity in Draw Entity");
+    pub fn draw_entity(&mut self, entity: Arc<Renderable>, transforms: Arc<Transforms>) {
         self.frame.draw(
             self.vertex_buffers.get(&entity.get_vertex_id()).expect("Unable to Get Vertex Buffer in Draw Entity"),
             self.index_buffers.get(&entity.get_index_id()).expect("Unable to Get Index Buffer in Draw Entity"),
             &self.program,
             &uniform!(
                 tex: self.texture_buffers.get(&entity.get_texture_id()).expect("Unable to Get Texture Buffer in Draw Entity"),
-                perspective: transforms.read().expect("Unable to Read Transforms in Draw Entity in Frame").get_perspective_matrix(&entity),
-                view: transforms.read().expect("Unable to Read Transforms in Draw Entity In Frame").get_view_matrix(&entity),
-                model: transforms.read().expect("Unable to Read Transforms in Draw Entity in Frame").get_model_matrix(&entity),
+                perspective: transforms.get_perspective_matrix(&entity),
+                view: transforms.get_view_matrix(&entity),
+                model: transforms.get_model_matrix(&entity),
             ),
             self.draw_parameters.get(&entity.get_draw_method_id()).expect("Unable to Get Draw Method in Draw Entity"))
             .expect("Unable to draw Entity");

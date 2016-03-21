@@ -1,37 +1,29 @@
-use std::sync::{RwLock, Arc};
+use std::sync::{Arc};
 use scoped_threadpool::{Pool};
 use time::{precise_time_s};
 use glium::glutin::Event as WindowEvent;
 
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
-use logic::{World, IdManager, EntityData};
+use logic::{World, WorldErr, EntityData};
 use math::{Vec2};
 use graphics::{Window, Transforms};
 
 pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
+    transforms: Arc<Transforms>,
     thread_pool: Pool,
-    display: Arc<RwLock<Display>>,
-    mouse: Arc<RwLock<Mouse>>,
-    keyboard: Arc<RwLock<Keyboard>>,
-    transforms: Arc<RwLock<Transforms>>,
-    manager: Arc<RwLock<IdManager>>,
 }
 
 impl<T: EntityData<T>> Game<T> {
-    pub fn new(manager: Arc<RwLock<IdManager>>, thread_count: u32, resolution: Vec2) -> Game<T> {
-        let keyboard = Arc::new(RwLock::new(Keyboard::new()));
-        let mouse = Arc::new(RwLock::new(Mouse::new()));
-        let display = Arc::new(RwLock::new(Display::new(resolution)));
-        let transforms = Arc::new(RwLock::new(Transforms::new()));
+    pub fn new(thread_count: u32, resolution: Vec2) -> Game<T> {
+        let keyboard = Arc::new(Keyboard::new());
+        let mouse = Arc::new(Mouse::new());
+        let display = Arc::new(Display::new(resolution));
+        let transforms = Arc::new(Transforms::new());
         Game {
-            world: Arc::new(World::new(keyboard.clone(), mouse.clone(), display.clone(), transforms.clone())),
-            thread_pool: Pool::new(thread_count),
-            display: display,
-            mouse: mouse,
-            keyboard: keyboard,
+            world: Arc::new(World::new(keyboard.clone(), mouse.clone(), display.clone())),
             transforms: transforms,
-            manager: manager,
+            thread_pool: Pool::new(thread_count),
         }
     }
 
@@ -47,20 +39,52 @@ impl<T: EntityData<T>> Game<T> {
         println!("Resumed");
     }
 
-    fn update_keyboard(&mut self, tick_number: u64, key_code: KeyCode, element_state: ButtonState) {
-        self.keyboard.write().expect("Unable to Write Keyboard in Update Keyboard in Game").set_key_state(key_code, Button::new(tick_number, element_state));
+    fn update_keyboard(&mut self, tick_number: u64, key_code: KeyCode, element_state: ButtonState) -> Result<(), GameErr> {
+        match Arc::get_mut(&mut self.world) {
+            Some(world) => {
+                match world.set_key(key_code, Button::new(tick_number, element_state)) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(GameErr::UpdateKeyboardWorld(err)),
+                }
+            },
+            None => Err(GameErr::UpdateKeyboard("Unable to Get Mut World")),
+        }
     }
 
-    fn update_mouse_button(&mut self, tick_number: u64, mouse_button: MouseButton, element_state: ButtonState, ) {
-        self.mouse.write().expect("Unable to Write Mouse in Update Mouse Button in Game").set_mouse_button(mouse_button, Button::new(tick_number, element_state));
+    fn update_mouse_button(&mut self, tick_number: u64, mouse_button: MouseButton, element_state: ButtonState) -> Result<(), GameErr> {
+        match Arc::get_mut(&mut self.world) {
+            Some(world) => {
+                match world.set_mouse_button(mouse_button, Button::new(tick_number, element_state)) {
+                    Ok(()) => Ok(()),
+                    Err(err) => Err(GameErr::UpdateMouseButtonWorld(err)),
+                }
+            }
+            None => Err(GameErr::UpdateMouseButton("Unable to Get Mut World")),
+        }
     }
 
-    fn update_mouse_pos(&mut self, mouse_pos: (i32, i32)) {
-        self.mouse.write().expect("Unable to Write Mouse in Update Mouse Pos in Game").set_mouse_position(Vec2::from([mouse_pos.0 as f32, mouse_pos.1 as f32]));
+    fn update_mouse_pos(&mut self, mouse_pos: (i32, i32)) -> Result<(), GameErr> {
+        match Arc::get_mut(&mut self.world) {
+            Some(world) => {
+                match world.set_mouse_position(Vec2::from([mouse_pos.0 as f32, mouse_pos.1 as f32])) {
+                    Ok(()) => Ok(()),
+                    Err(err) => Err(GameErr::UpdateMousePositionWorld(err)),
+                }
+            },
+            None => Err(GameErr::UpdateMousePosition("Unable to Get Mut World")),
+        }
     }
 
-    fn update_resolution(&mut self, resolution: (u32, u32)) {
-        self.display.write().expect("Unable to Write Display in Update Resolution in Game").set_resolution(Vec2::from([resolution.0 as f32, resolution.1 as f32]));
+    fn update_resolution(&mut self, resolution: (u32, u32)) -> Result<(), GameErr> {
+        match Arc::get_mut(&mut self.world) {
+            Some(world) => {
+                match world.set_resolution(Vec2::from([resolution.0 as f32, resolution.1 as f32])) {
+                    Ok(()) => Ok(()),
+                    Err(err) => Err(GameErr::UpdateResolutionWorld(err)),
+                }
+            },
+            None => Err(GameErr::UpdateResolution("Unable to Get Mut World")),
+        }
     }
 
     pub fn run(&mut self, window: &mut Window) {
@@ -84,7 +108,7 @@ impl<T: EntityData<T>> Game<T> {
             while delta_time > 0.0 {
                 for event in window.poll_events(){
                     match event {
-                        WindowEvent::Resized(width, height) => self.update_resolution((width, height)),
+                        WindowEvent::Resized(width, height) => self.update_resolution((width, height)).unwrap(),
                         // WindowEvent::Moved(x, y) => {
                         //
                         // },
@@ -103,14 +127,14 @@ impl<T: EntityData<T>> Game<T> {
                             }
                         },
                         WindowEvent::KeyboardInput(element_state, _, virtual_key_code) => match virtual_key_code {
-                            Some(virtual_key_code) => self.update_keyboard(tick_number, virtual_key_code, element_state),
+                            Some(virtual_key_code) => self.update_keyboard(tick_number, virtual_key_code, element_state).unwrap(),
                             None => (),
                         },
-                        WindowEvent::MouseMoved(pos) => self.update_mouse_pos(pos),
+                        WindowEvent::MouseMoved(pos) => self.update_mouse_pos(pos).unwrap(),
                         // WindowEvent::MouseWheel(mouse_scroll_data) => {
                         //
                         // },
-                        WindowEvent::MouseInput(element_state, mouse_button) => self.update_mouse_button(tick_number, mouse_button, element_state),
+                        WindowEvent::MouseInput(element_state, mouse_button) => self.update_mouse_button(tick_number, mouse_button, element_state).unwrap(),
                         // WindowEvent::Awakened => {
                         //
                         // },
@@ -126,7 +150,7 @@ impl<T: EntityData<T>> Game<T> {
                         _ => (),
                     }
                 }
-                self.tick(tps_s);
+                self.tick(tps_s).unwrap();
                 delta_time -= tps_s;
                 ticks += 1;
                 tick_number += 1;
@@ -143,23 +167,12 @@ impl<T: EntityData<T>> Game<T> {
     }
 
     fn render(&mut self, window: &mut Window) {
-        let world = self.world.clone();
-        let entity_data = world.get_entity_data();
-        let entity_data = entity_data.read().expect("Unable to Read Entity Data in Render in Game");
-        self.thread_pool.scoped(|scope| {
-            for entry in entity_data.iter() {
-                let entity = entry.1.clone();
-                let world = world.clone();
-                scope.execute(move || {
-                    entity.render_sync(world);
-                });
-            }
-        });
-        for entry in entity_data.iter() {
-            entry.1.render(window, world.clone());
+        let mut world = Arc::get_mut(&mut self.world).unwrap();
+        for entry in world.get_mut_entity_data().unwrap().iter_mut() {
+            // entry.1.render(window);
         }
         let mut frame = window.frame();
-        for entry in entity_data.iter() {
+        for entry in world.get_mut_entity_data().unwrap().iter_mut() {
             match entry.1.get_renderable(){
                 Some(data) => {
                     frame.draw_entity(data, self.transforms.clone());
@@ -170,30 +183,50 @@ impl<T: EntityData<T>> Game<T> {
         frame.end();
     }
 
-    fn tick(&mut self, delta_time: f64) {
-        let world = self.world.clone();
-        let manager = self.manager.clone();
-        let delta_time = Arc::new(delta_time);
-        self.thread_pool.scoped(|scope| {
-            let entity_data = world.get_entity_data();
-            let entity_data = entity_data.read().expect("Unable to Read Entity Data in Tick in Game");
-            for entry in entity_data.iter() {
-                let entity = entry.1.clone();
-                let world = world.clone();
-                let delta_time = delta_time.clone();
-                scope.execute(move || {
-                    entity.tick(delta_time, world);
-                });
-            }
-            scope.join_all();
-            for entry in entity_data.iter() {
-                let entity = entry.1.clone();
-                let world = world.clone();
-                let manager = manager.clone();
-                scope.execute(move || {
-                    entity.tick_mut(manager, world);
-                });
-            }
-        });
+    fn tick(&mut self, delta_time: f64) -> Result<(), GameErr> {
+        {
+            let world = self.world.clone();
+            let delta_time = Arc::new(delta_time);
+            self.thread_pool.scoped(|scope| {
+                for entry in world.get_entity_data().iter() {
+                    let entity = entry.1.clone();
+                    let world = world.clone();
+                    let delta_time = delta_time.clone();
+                    scope.execute(move || {
+                        entity.tick(delta_time, world);
+                    });
+
+                }
+
+            });
+        }
+        match Arc::get_mut(&mut self.world)  {
+            Some(world) => {
+                match world.get_mut_entity_data() {
+                    Ok(entity_data) => {
+                        for entry in entity_data.iter_mut() {
+                            // entity.tick_mut();
+                        }
+                        Ok(())
+                    },
+                    Err(err) => Err(GameErr::TickWorld(err)),
+                }
+            },
+            None => Err(GameErr::Tick("Unable to Get Mut World")),
+        }
     }
+}
+
+#[derive(Debug)]
+pub enum GameErr {
+    UpdateKeyboard(&'static str),
+    UpdateKeyboardWorld(WorldErr),
+    UpdateMouseButton(&'static str),
+    UpdateMouseButtonWorld(WorldErr),
+    UpdateMousePosition(&'static str),
+    UpdateMousePositionWorld(WorldErr),
+    UpdateResolution(&'static str),
+    UpdateResolutionWorld(WorldErr),
+    Tick(&'static str),
+    TickWorld(WorldErr),
 }

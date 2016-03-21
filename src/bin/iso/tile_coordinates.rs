@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 
 use dorp::{Id, World};
 
@@ -24,7 +24,7 @@ pub struct TileCoordinates {
     x: i32,
     y: i32,
     tile_id: Id,
-    changes: Arc<RwLock<Changes>>,
+    //changes: Arc<RwLock<Changes>>,
 }
 
 impl TileCoordinates {

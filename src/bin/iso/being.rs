@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 use std::collections::{VecDeque, HashMap};
 
 use dorp::{Id, World};
@@ -72,7 +72,7 @@ impl Being {
                             }
                         }
                         for opened in open.iter() {
-                            
+
                         }
                     }
                 }

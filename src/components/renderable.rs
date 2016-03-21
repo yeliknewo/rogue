@@ -1,6 +1,4 @@
-use std::sync::{Arc, RwLock};
-
-use logic::{Id, IdManager, IdType, World, EntityData};
+use logic::{Id, IdManager, IdType, WorldErr};
 use graphics::{Window, Vertex, Index, DrawMethod};
 use math::{Mat4};
 
@@ -25,15 +23,15 @@ pub struct Renderable {
 }
 
 impl Renderable {
-    pub fn new(manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn new(manager: &mut IdManager) -> Renderable {
         Renderable {
-            texture_id: Id::new(manager.clone(), IdType::Texture),
-            vertex_id: Id::new(manager.clone(), IdType::Vertex),
-            index_id: Id::new(manager.clone(), IdType::Index),
-            draw_method_id: Id::new(manager.clone(), IdType::DrawMethod),
-            perspective_id: Id::new(manager.clone(), IdType::Perspective),
-            view_id: Id::new(manager.clone(), IdType::View),
-            model_id: Id::new(manager.clone(), IdType::Model),
+            texture_id: Id::new(manager, IdType::Texture),
+            vertex_id: Id::new(manager, IdType::Vertex),
+            index_id: Id::new(manager, IdType::Index),
+            draw_method_id: Id::new(manager, IdType::DrawMethod),
+            perspective_id: Id::new(manager, IdType::Perspective),
+            view_id: Id::new(manager, IdType::View),
+            model_id: Id::new(manager, IdType::Model),
             vertices: None,
             indices: None,
             texture: None,
@@ -43,36 +41,6 @@ impl Renderable {
             model: None,
             dirty: false,
             dirty_sync: false,
-        }
-    }
-
-    pub fn render_sync<T: EntityData<T>>(&mut self, world: Arc<World<T>>) {
-        if self.dirty_sync {
-            match self.perspective.clone() {
-                Some(perspective) => {
-                    let transforms = world.get_transforms();
-                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_perspective_matrix(self.perspective_id, perspective.0, perspective.1);
-                    self.perspective = None;
-                },
-                None => (),
-            }
-            match self.view.clone() {
-                Some(view) => {
-                    let transforms = world.get_transforms();
-                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_view_matrix(self.view_id, view.0, view.1);
-                    self.view = None;
-                },
-                None => (),
-            }
-            match self.model.clone() {
-                Some(model) => {
-                    let transforms = world.get_transforms();
-                    transforms.read().expect("Unable to Read Transforms in Render in Renderable").set_model_matrix(self.model_id, model.0, model.1);
-                    self.model = None;
-                },
-                None => (),
-            }
-            self.dirty_sync = false;
         }
     }
 
@@ -110,37 +78,37 @@ impl Renderable {
         }
     }
 
-    pub fn with_new_vertices(mut self, vertices: Vec<Vertex>, manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_vertices(mut self, vertices: Vec<Vertex>, manager: &mut IdManager) -> Renderable {
         self.set_new_vertices(vertices, manager);
         self
     }
 
-    pub fn with_new_indices(mut self, indices: Vec<Index>, manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_indices(mut self, indices: Vec<Index>, manager: &mut IdManager) -> Renderable {
         self.set_new_indices(indices, manager);
         self
     }
 
-    pub fn with_new_texture(mut self, texture: &'static [u8], manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_texture(mut self, texture: &'static [u8], manager: &mut IdManager) -> Renderable {
         self.set_new_texture(texture, manager);
         self
     }
 
-    pub fn with_new_draw_method(mut self, draw_method: DrawMethod, manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_draw_method(mut self, draw_method: DrawMethod, manager: &mut IdManager) -> Renderable {
         self.set_new_draw_method(draw_method, manager);
         self
     }
 
-    pub fn with_new_perspective(mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_perspective(mut self, matrix: Mat4, manager: &mut IdManager) -> Renderable {
         self.set_new_perspective(matrix, manager);
         self
     }
 
-    pub fn with_new_view(mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_view(mut self, matrix: Mat4, manager: &mut IdManager) -> Renderable {
         self.set_new_view(matrix, manager);
         self
     }
 
-    pub fn with_new_model(mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) -> Renderable {
+    pub fn with_new_model(mut self, matrix: Mat4, manager: &mut IdManager) -> Renderable {
         self.set_new_model(matrix, manager);
         self
     }
@@ -180,37 +148,37 @@ impl Renderable {
         self
     }
 
-    pub fn set_new_vertices(&mut self, vertices: Vec<Vertex>, manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_vertices(&mut self, vertices: Vec<Vertex>, manager: &mut IdManager) {
         self.set_vertex_id(Id::new(manager, IdType::Vertex));
         self.set_vertices(vertices);
     }
 
-    pub fn set_new_indices(&mut self, indices: Vec<Index>, manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_indices(&mut self, indices: Vec<Index>, manager: &mut IdManager) {
         self.set_index_id(Id::new(manager, IdType::Index));
         self.set_indices(indices);
     }
 
-    pub fn set_new_texture(&mut self, texture: &'static [u8], manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_texture(&mut self, texture: &'static [u8], manager: &mut IdManager) {
         self.set_texture_id(Id::new(manager, IdType::Texture));
         self.set_texture(texture);
     }
 
-    pub fn set_new_draw_method(&mut self, draw_method: DrawMethod, manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_draw_method(&mut self, draw_method: DrawMethod, manager: &mut IdManager) {
         self.set_draw_method_id(Id::new(manager, IdType::DrawMethod));
         self.set_draw_method(draw_method);
     }
 
-    pub fn set_new_perspective(&mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_perspective(&mut self, matrix: Mat4, manager: &mut IdManager) {
         self.set_perspective_id(Id::new(manager, IdType::Perspective));
         self.set_perspective(matrix);
     }
 
-    pub fn set_new_view(&mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_view(&mut self, matrix: Mat4, manager: &mut IdManager) {
         self.set_view_id(Id::new(manager, IdType::View));
         self.set_view(matrix);
     }
 
-    pub fn set_new_model(&mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) {
+    pub fn set_new_model(&mut self, matrix: Mat4, manager: &mut IdManager) {
         self.set_model_id(Id::new(manager, IdType::Model));
         self.set_model(matrix);
     }
@@ -340,4 +308,8 @@ impl Renderable {
     pub fn get_model_id(&self) -> Id {
         self.model_id
     }
+}
+
+pub enum RenderableErr {
+    RenderSync(WorldErr),
 }

@@ -4,15 +4,10 @@ extern crate time;
 extern crate image;
 extern crate scoped_threadpool;
 
-#[allow(dead_code)]
 mod math;
-#[allow(dead_code)]
 mod input;
-#[allow(dead_code)]
 mod logic;
-#[allow(dead_code)]
 mod graphics;
-#[allow(dead_code)]
 mod components;
 
 pub use self::math::{Mat4, Vec2, Vec3, Vec4, DEG_TO_RAD};

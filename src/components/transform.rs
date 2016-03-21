@@ -1,7 +1,4 @@
-use std::sync::{Arc, RwLock};
-
-use math::{Mat4, Vec3};
-use components::{Renderable};
+use math::{Vec3};
 
 pub struct Transform {
     position: Vec3,
@@ -52,14 +49,6 @@ impl Transform {
                 None => (),
             }
             self.dirty = false;
-        }
-    }
-
-    pub fn render_sync(&mut self, renderable: Arc<RwLock<Renderable>>) {
-        if self.dirty_matrix {
-            let mut renderable = renderable.write().expect("Unable to Write Renderable in Tick Mut in Transform");
-            renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position));
-            self.dirty_matrix = false;
         }
     }
 
