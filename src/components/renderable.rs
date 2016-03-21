@@ -76,7 +76,7 @@ impl Renderable {
         }
     }
 
-    pub fn render<T: EntityData<T>>(&mut self, window: &mut Window, world: Arc<World<T>>) {
+    pub fn render(&mut self, window: &mut Window) {
         if self.dirty {
             match self.vertices.clone() {
                 Some(vertices) => {
@@ -110,23 +110,58 @@ impl Renderable {
         }
     }
 
+    pub fn with_new_vertices(mut self, vertices: Vec<Vertex>, manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_vertices(vertices, manager);
+        self
+    }
+
+    pub fn with_new_indices(mut self, indices: Vec<Index>, manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_indices(indices, manager);
+        self
+    }
+
+    pub fn with_new_texture(mut self, texture: &'static [u8], manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_texture(texture, manager);
+        self
+    }
+
+    pub fn with_new_draw_method(mut self, draw_method: DrawMethod, manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_draw_method(draw_method, manager);
+        self
+    }
+
+    pub fn with_new_perspective(mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_perspective(matrix, manager);
+        self
+    }
+
+    pub fn with_new_view(mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_view(matrix, manager);
+        self
+    }
+
+    pub fn with_new_model(mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) -> Renderable {
+        self.set_new_model(matrix, manager);
+        self
+    }
+
     pub fn with_vertices(mut self, vertices: Vec<Vertex>) -> Renderable {
-        self.vertices = Some(vertices);
+        self.set_vertices(vertices);
         self
     }
 
     pub fn with_indices(mut self, indices: Vec<Index>) -> Renderable {
-        self.indices = Some(indices);
+        self.set_indices(indices);
         self
     }
 
     pub fn with_texture(mut self, texture: &'static [u8]) -> Renderable {
-        self.texture = Some(texture);
+        self.set_texture(texture);
         self
     }
 
     pub fn with_draw_method(mut self, draw_method: DrawMethod) -> Renderable {
-        self.draw_method = Some(draw_method);
+        self.set_draw_method(draw_method);
         self
     }
 
@@ -143,6 +178,41 @@ impl Renderable {
     pub fn with_model(mut self, matrix: Mat4) -> Renderable {
         self.set_model(matrix);
         self
+    }
+
+    pub fn set_new_vertices(&mut self, vertices: Vec<Vertex>, manager: Arc<RwLock<IdManager>>) {
+        self.set_vertex_id(Id::new(manager, IdType::Vertex));
+        self.set_vertices(vertices);
+    }
+
+    pub fn set_new_indices(&mut self, indices: Vec<Index>, manager: Arc<RwLock<IdManager>>) {
+        self.set_index_id(Id::new(manager, IdType::Index));
+        self.set_indices(indices);
+    }
+
+    pub fn set_new_texture(&mut self, texture: &'static [u8], manager: Arc<RwLock<IdManager>>) {
+        self.set_texture_id(Id::new(manager, IdType::Texture));
+        self.set_texture(texture);
+    }
+
+    pub fn set_new_draw_method(&mut self, draw_method: DrawMethod, manager: Arc<RwLock<IdManager>>) {
+        self.set_draw_method_id(Id::new(manager, IdType::DrawMethod));
+        self.set_draw_method(draw_method);
+    }
+
+    pub fn set_new_perspective(&mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) {
+        self.set_perspective_id(Id::new(manager, IdType::Perspective));
+        self.set_perspective(matrix);
+    }
+
+    pub fn set_new_view(&mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) {
+        self.set_view_id(Id::new(manager, IdType::View));
+        self.set_view(matrix);
+    }
+
+    pub fn set_new_model(&mut self, matrix: Mat4, manager: Arc<RwLock<IdManager>>) {
+        self.set_model_id(Id::new(manager, IdType::Model));
+        self.set_model(matrix);
     }
 
     pub fn set_vertices(&mut self, vertices: Vec<Vertex>) {

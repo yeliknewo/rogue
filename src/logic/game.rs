@@ -151,20 +151,16 @@ impl<T: EntityData<T>> Game<T> {
                 let entity = entry.1.clone();
                 let world = world.clone();
                 scope.execute(move || {
-                    entity.write().expect("Unable to Write Entity in Tick in Game").render_sync(world);
+                    entity.render_sync(world);
                 });
             }
         });
         for entry in entity_data.iter() {
-            let entity = entry.1;
-            let mut entity = entity.write().expect("Unable to Write Entity in Render in Game");
-            entity.render(window, world.clone());
+            entry.1.render(window, world.clone());
         }
         let mut frame = window.frame();
         for entry in entity_data.iter() {
-            let entity = entry.1;
-            let entity = entity.read().expect("Unable to Read Entity in Render in Game");
-            match entity.get_renderable() {
+            match entry.1.get_renderable(){
                 Some(data) => {
                     frame.draw_entity(data, self.transforms.clone());
                 },
@@ -186,7 +182,7 @@ impl<T: EntityData<T>> Game<T> {
                 let world = world.clone();
                 let delta_time = delta_time.clone();
                 scope.execute(move || {
-                    entity.read().expect("Unable to Read Entity in Tick in Game").tick(delta_time, world);
+                    entity.tick(delta_time, world);
                 });
             }
             scope.join_all();
@@ -195,7 +191,7 @@ impl<T: EntityData<T>> Game<T> {
                 let world = world.clone();
                 let manager = manager.clone();
                 scope.execute(move || {
-                    entity.write().expect("Unable to Write Entity in Tick in Game").tick_mut(manager, world);
+                    entity.tick_mut(manager, world);
                 });
             }
         });

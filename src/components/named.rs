@@ -4,21 +4,13 @@ use logic::{EntityData, World, Id};
 
 pub struct Named {
     name: &'static str,
-    dirty: bool,
 }
 
 impl Named {
-    pub fn new(name: &'static str) -> Named {
+    pub fn new<T: EntityData<T>>(name: &'static str, id: Id, world: Arc<World<T>>) -> Named {
+        world.register_name(id, name).unwrap();
         Named {
             name: name,
-            dirty: true,
-        }
-    }
-
-    pub fn tick_mut<T: EntityData<T>>(&mut self, id: Id, world: Arc<World<T>>) {
-        if self.dirty {
-            world.register_name(id, self.name).unwrap();
-            self.dirty = false;
         }
     }
 

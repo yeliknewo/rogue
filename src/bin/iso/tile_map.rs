@@ -15,6 +15,10 @@ impl TileMap {
         }
     }
 
+    pub fn register_tile_coords(&mut self, coords: (i32, i32), id: Id) -> Result<(), &'static str> {
+        self.register_tile(coords.0, coords.1, id)
+    }
+
     pub fn register_tile(&mut self, x:i32, y: i32, id: Id) -> Result<(), &'static str> {
         if self.map.contains_key(&y) {
             let mut y_map = self.map.get_mut(&y).unwrap();
@@ -30,16 +34,23 @@ impl TileMap {
         }
     }
 
-    pub fn get_at(&self, x: i32, y: i32) -> Option<&Id> {
+    pub fn get_at(&self, x: i32, y: i32) -> Option<Id> {
         if self.map.contains_key(&y) {
             let y_map = self.map.get(&y).unwrap();
             if y_map.contains_key(&x) {
-                y_map.get(&x)
+                match y_map.get(&x) {
+                    Some(id) => Some(id.clone()),
+                    None => None,
+                }
             } else {
                 None
             }
         } else {
             None
         }
+    }
+
+    pub fn get_at_xy(&self, coords: (i32, i32)) -> Option<Id> {
+        self.get_at(coords.0, coords.1)
     }
 }

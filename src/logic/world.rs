@@ -11,7 +11,7 @@ pub struct World<T: EntityData<T>> {
     mouse: Arc<RwLock<Mouse>>,
     display: Arc<RwLock<Display>>,
     transforms: Arc<RwLock<Transforms>>,
-    entity_data: Arc<RwLock<HashMap<Id, Arc<RwLock<T>>>>>,
+    entity_data: Arc<RwLock<HashMap<Id, Arc<T>>>>,
     names: Arc<RwLock<HashMap<&'static str, Id>>>,
 }
 
@@ -47,11 +47,24 @@ impl<T: EntityData<T>> World<T> {
         self.display.read().expect("Unable to Read Display in Get Aspect Ratio in World").get_aspect_ratio()
     }
 
-    pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<Id, Arc<RwLock<T>>>>> {
+    pub fn get_entity_data(&self) -> Arc<RwLock<HashMap<Id, Arc<T>>>> {
         self.entity_data.clone()
     }
 
-    pub fn get_entity_by_name(&self, name: &'static str) -> Option<Arc<RwLock<T>>> {
+    pub fn add_entity(&self, entity: T) {
+        self.entity_data.write().expect("Unable to Write Entity Data in Add Entity in World").insert(entity.get_id(), Arc::new(entity));
+    }
+
+    pub fn get_entity_by_id(&self, id: Id) -> Option<Arc<T>> {
+        match self.entity_data.read().expect("Unable to Read Entity Data in Get Entity By Id in World").get(&id) {
+            Some(entity_data) => {
+                Some(entity_data.clone())
+            }
+            None => None,
+        }
+    }
+
+    pub fn get_entity_by_name(&self, name: &'static str) -> Option<Arc<T>> {
         let names = self.names.read().expect("Unable to Read Names in Get Entity By Name in World");
         match names.get(name) {
             Some(id) => {

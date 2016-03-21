@@ -2,7 +2,7 @@ use std::collections::{HashMap};
 use std::fmt::{Display, Formatter, Error};
 use std::sync::{Arc, RwLock};
 
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct Id {
     id: IdSize,
 }
