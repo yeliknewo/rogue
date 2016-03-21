@@ -1,5 +1,5 @@
 use std::sync::{Arc, RwLock};
-use std::collections::{VecDeque};
+use std::collections::{VecDeque, HashMap};
 
 use dorp::{Id, World};
 
@@ -50,9 +50,35 @@ impl Being {
         match goal {
             Some(goal) => {
                 let tile_coordinates = tile_coordinates.read().expect("Unable to Read TileCoordinates in Tick in Being");
-                let entity = world.get_entity_by_id(tile_coordinates.get_tile()).expect("Unable to Get Entity By Id in Tick in Being");
-                let tile = entity.get_tile().expect("Unable to Get Tile in Tick in Being");
+                let mut open = vec!(tile_coordinates.get_tile());
+                let mut closed: HashMap<Id, Node> = HashMap::new();
+                let mut finished: Option<Node> = None;
+                let mut distance = 0;
+                loop {
+                    let current = match open.pop() {
+                        Some(current) => current,
+                        None => break,
+                    };
+                    distance += 1;
+                    let tile = world.get_entity_by_id(current).expect("Unable to Get Entity By Id in Tick in Being").get_tile().expect("Unable to Get Tile in Tick in Being");
+                    let mut touching = tile.read().expect("Unable to Read Tile in Tick in Being").get_touching();
+                    let len = touching.len();
+                    for tile in touching.drain(0..len) {
+                        let close = closed.get(&tile);
+                        if close.is_some() {
+                            let close = close.unwrap();
+                            if close.from == current && close.distance < distance {
+                                break;
+                            }
+                        }
+                        for opened in open.iter() {
+                            
+                        }
+                    }
+                }
+
                 //NOTE Add Path to Front
+
                 let mut changes = self.changes.write().expect("Unable to Write Changes in Tick in Being");
                 changes.goal = None;
                 changes.dirty = true;
@@ -69,6 +95,20 @@ impl Being {
             if !moves.is_empty() {
                 self.changes.write().expect("Unable to Write Changes in Tick in Being").next = moves.remove(0);
             }
+        }
+    }
+}
+
+struct Node {
+    from: Id,
+    distance: u32,
+}
+
+impl Node {
+    pub fn new(from: Id, distance: u32) -> Node {
+        Node {
+            from: from,
+            distance: distance,
         }
     }
 }
