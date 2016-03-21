@@ -1,4 +1,4 @@
-use logic::{Id, IdManager, IdType, WorldErr};
+use logic::{Id, IdManager, IdType};
 use graphics::{Window, Vertex, Index, DrawMethod};
 use math::{Mat4};
 
@@ -311,5 +311,5 @@ impl Renderable {
 }
 
 pub enum RenderableErr {
-    RenderSync(WorldErr),
+    //RenderSync(WorldErr),
 }

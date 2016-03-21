@@ -163,5 +163,5 @@ pub enum WorldErr {
     AddEntity(&'static str),
     RegisterName(&'static str),
     DeregisterName(&'static str),
-    GetMutTransforms(&'static str),
+    //GetMutTransforms(&'static str),
 }

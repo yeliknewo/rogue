@@ -16,9 +16,7 @@ pub use self::logic::{IdManager, Game, World, Id, IdType, EntityData};
 pub use self::graphics::{Window, WindowArgs, DrawMethod, CullingMethod, DepthTestMethod, Vertex, Index};
 pub use self::components::{Transform, Renderable, Named};
 
-use std::sync::{Arc, RwLock};
-
-pub fn init() -> Arc<RwLock<IdManager>> {
+pub fn init() -> IdManager {
     graphics::init_vertex();
-    Arc::new(RwLock::new(IdManager::new()))
+    IdManager::new()
 }

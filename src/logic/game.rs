@@ -168,8 +168,8 @@ impl<T: EntityData<T>> Game<T> {
 
     fn render(&mut self, window: &mut Window) {
         let mut world = Arc::get_mut(&mut self.world).unwrap();
-        for entry in world.get_mut_entity_data().unwrap().iter_mut() {
-            // entry.1.render(window);
+        for (_, entity) in world.get_mut_entity_data().unwrap().iter_mut() {
+            Arc::get_mut(entity).unwrap().render(window);
         }
         let mut frame = window.frame();
         for entry in world.get_mut_entity_data().unwrap().iter_mut() {
@@ -204,8 +204,14 @@ impl<T: EntityData<T>> Game<T> {
             Some(world) => {
                 match world.get_mut_entity_data() {
                     Ok(entity_data) => {
-                        for entry in entity_data.iter_mut() {
-                            // entity.tick_mut();
+                        for (_, entity) in entity_data.iter_mut() {
+                            match Arc::get_mut(entity) {
+                                Some(entity) => {
+                                    entity.tick_mut();
+
+                                },
+                                None => return Err(GameErr::Tick("Unable to Get Mut Entity")),
+                            }
                         }
                         Ok(())
                     },
