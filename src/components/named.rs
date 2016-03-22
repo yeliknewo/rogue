@@ -1,13 +1,13 @@
 use std::fmt;
 
-use logic::{EntityData, EntityDataErr, World, WorldErr, Id};
+use logic::{EntityData, World, WorldErr, Id};
 
 pub struct Named {
     name: &'static str,
 }
 
 impl Named {
-    pub fn new<T: EntityData<T, Y>, Y: EntityDataErr>(name: &'static str, id: Id, world: &mut World<T, Y>) -> Result<Named, NamedErr> {
+    pub fn new<T: EntityData<T>>(name: &'static str, id: Id, world: &mut World<T>) -> Result<Named, NamedErr> {
         match world.register_name(id, name) {
             Ok(_) => {
                 Ok(

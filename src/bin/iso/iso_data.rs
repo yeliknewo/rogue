@@ -1,10 +1,10 @@
 use std::sync::{Arc};
-use std::fmt::{Debug};
 use std::fmt;
+use std::error::Error;
 
 use dorp::{
-    EntityData, EntityDataErr, World, IdManager, Id, Window, Renderable, Named, Transform,
-    MatrixData, RenderableErr
+    EntityData, World, IdManager, Id, Window, Renderable, Named, Transform, MatrixData,
+    RenderableErr
 };
 
 pub struct IsoData {
@@ -14,8 +14,8 @@ pub struct IsoData {
     transform: Option<Arc<Transform>>,
 }
 
-impl EntityData<IsoData, IsoDataErr> for IsoData {
-    fn tick(&self, delta_time: Arc<f64>, world: Arc<World<IsoData, IsoDataErr>>) {
+impl EntityData<IsoData> for IsoData {
+    fn tick(&self, delta_time: Arc<f64>, world: Arc<World<IsoData>>) {
 
     }
 
@@ -23,14 +23,14 @@ impl EntityData<IsoData, IsoDataErr> for IsoData {
 
     }
 
-    fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), IsoDataErr>{
+    fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), Box<Error>>{
         if self.renderable.is_some() {
             match match Arc::get_mut(&mut self.renderable.clone().unwrap()) {
                 Some(renderable) => renderable,
-                None => return Err(IsoDataErr::Render("Unable to Get Mut Renderable")),
+                None => return Err(Box::new(IsoDataErr::GetMut)),
             }.render(window, matrix_data) {
                 Ok(()) => (),
-                Err(err) => return Err(IsoDataErr::RenderRenderable(err)),
+                Err(err) => return Err(IsoDataErr::Renderable(err)),
             };
         }
         Ok(())
@@ -79,25 +79,23 @@ impl IsoData {
     }
 }
 
+#[derive(Debug)]
 pub enum IsoDataErr {
-    Render(&'static str),
-    RenderRenderable(RenderableErr),
+    Renderable(RenderableErr),
+    GetMut,
 }
 
 impl fmt::Display for IsoDataErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &IsoDataErr::Render(err) => {
-                write!(f, "{}", err);
-            },
-            &IsoDataErr::RenderRenderable(ref err) => {
-                write!(f, "{}", err);
-            }
-        }
-        Ok(())
+
     }
 }
 
-impl EntityDataErr for IsoDataErr {
-
+impl Error for IsoDataErr {
+    fn description(&self) -> &str {
+        match *self {
+            IsoDataErr::Renderable(err) => err.get_description(),
+            IsoDataErr::GetMut => "Get Mut was None",
+        }
+    }
 }
