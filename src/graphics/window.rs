@@ -10,7 +10,7 @@ use std::sync::{Arc};
 
 use math::{Vec2};
 use logic::{Id};
-use graphics::{Vertex, Index, Transforms, DrawMethod, method_to_parameters};
+use graphics::{Vertex, Index, MatrixData, DrawMethod, method_to_parameters};
 use components::{Renderable};
 
 pub struct Window {
@@ -164,7 +164,7 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn draw_entity(&mut self, entity: Arc<Renderable>, transforms: Arc<Transforms>) {
+    pub fn draw_entity(&mut self, entity: Arc<Renderable>, transforms: Arc<MatrixData>) {
         self.frame.draw(
             self.vertex_buffers.get(&entity.get_vertex_id()).expect("Unable to Get Vertex Buffer in Draw Entity"),
             self.index_buffers.get(&entity.get_index_id()).expect("Unable to Get Index Buffer in Draw Entity"),

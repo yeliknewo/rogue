@@ -1,26 +1,30 @@
 use std::sync::{Arc};
 use std::collections::{HashMap};
+use std::marker::{PhantomData};
+use std::fmt;
 
 use input::{Keyboard, Mouse, Display, KeyCode, MouseButton, Button};
-use logic::{Id, EntityData};
+use logic::{Id, EntityData, EntityDataErr};
 use math::{Vec2};
 
-pub struct World<T: EntityData<T>> {
+pub struct World<T: EntityData<T, Y>, Y: EntityDataErr> {
     keyboard: Arc<Keyboard>,
     mouse: Arc<Mouse>,
     display: Arc<Display>,
     entity_data: Arc<HashMap<Id, Arc<T>>>,
     names: Arc<HashMap<&'static str, Id>>,
+    marker: PhantomData<Y>,
 }
 
-impl<T: EntityData<T>> World<T> {
-    pub fn new(keyboard: Arc<Keyboard>, mouse: Arc<Mouse>, display: Arc<Display>) -> World<T> {
+impl<T: EntityData<T, Y>, Y: EntityDataErr> World<T, Y> {
+    pub fn new(keyboard: Arc<Keyboard>, mouse: Arc<Mouse>, display: Arc<Display>) -> World<T, Y> {
         World {
             keyboard: keyboard,
             mouse: mouse,
             display: display,
             entity_data: Arc::new(HashMap::new()),
             names: Arc::new(HashMap::new()),
+            marker: PhantomData,
         }
     }
 
@@ -163,5 +167,36 @@ pub enum WorldErr {
     AddEntity(&'static str),
     RegisterName(&'static str),
     DeregisterName(&'static str),
-    //GetMutTransforms(&'static str),
+}
+
+impl fmt::Display for WorldErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &WorldErr::GetMutEntityData(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::SetKey(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::SetMouseButton(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::SetMousePosition(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::SetResolution(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::AddEntity(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::RegisterName(err) => {
+                write!(f, "{}", err);
+            },
+            &WorldErr::DeregisterName(err) => {
+                write!(f, "{}", err);
+            },
+        }
+        Ok(())
+    }
 }

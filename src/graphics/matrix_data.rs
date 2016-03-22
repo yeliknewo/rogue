@@ -1,11 +1,12 @@
 use std::sync::{Arc};
 use std::collections::{HashMap};
+use std::fmt;
 
 use logic::{Id};
 use math::{Mat4, Vec2, Vec3, Vec4};
 use components::{Renderable};
 
-pub struct Transforms {
+pub struct MatrixData {
     perspective_mat4s: Arc<HashMap<Id, Mat4>>,
     perspective_mat4s_inverse: Arc<HashMap<Id, Mat4>>,
     view_mat4s: Arc<HashMap<Id, Mat4>>,
@@ -14,9 +15,9 @@ pub struct Transforms {
     model_mat4s_inverse: Arc<HashMap<Id, Mat4>>,
 }
 
-impl Transforms {
-    pub fn new() -> Transforms {
-        Transforms {
+impl MatrixData {
+    pub fn new() -> MatrixData {
+        MatrixData {
             perspective_mat4s: Arc::new(HashMap::new()),
             perspective_mat4s_inverse: Arc::new(HashMap::new()),
             view_mat4s: Arc::new(HashMap::new()),
@@ -46,19 +47,19 @@ impl Transforms {
         *self.perspective_mat4s_inverse.get(&entity.get_perspective_id()).expect("Unable to Get Perspective Inverse in Get Perspective Inverse")
     }
 
-    pub fn set_perspective_matrix(&mut self, id: Id, perspective: Mat4, inverse: Mat4) -> Result<(), TransformsError> {
+    pub fn set_perspective_matrix(&mut self, id: Id, perspective: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
         match Arc::get_mut(&mut self.perspective_mat4s) {
             Some(mat4s) => {
                 mat4s.insert(id, perspective);
             },
-            None => return Err(TransformsError::SetPerspectiveMatrix("Unable to Get Mut Perspective Mat4s")),
+            None => return Err(MatrixDataErr::SetPerspectiveMatrix("Unable to Get Mut Perspective Mat4s")),
         }
         match Arc::get_mut(&mut self.perspective_mat4s_inverse) {
             Some(mat4s) => {
                 mat4s.insert(id, inverse);
                 Ok(())
             },
-            None => Err(TransformsError::SetPerspectiveMatrix("Unable to Get Mut Perspective Mat4s Inverse")),
+            None => Err(MatrixDataErr::SetPerspectiveMatrix("Unable to Get Mut Perspective Mat4s Inverse")),
         }
     }
 
@@ -70,19 +71,19 @@ impl Transforms {
         *self.view_mat4s_inverse.get(&entity.get_view_id()).expect("Unable to Get View Inverse in Get View Inverse")
     }
 
-    pub fn set_view_matrix(&mut self, id: Id, view: Mat4, inverse: Mat4) -> Result<(), TransformsError> {
+    pub fn set_view_matrix(&mut self, id: Id, view: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
         match Arc::get_mut(&mut self.view_mat4s) {
             Some(mat4s) => {
                 mat4s.insert(id, view);
             },
-            None => return Err(TransformsError::SetViewMatrix("Unable to Get Mut View Mat4s")),
+            None => return Err(MatrixDataErr::SetViewMatrix("Unable to Get Mut View Mat4s")),
         }
         match Arc::get_mut(&mut self.view_mat4s_inverse) {
             Some(mat4s) => {
                 mat4s.insert(id, inverse);
                 Ok(())
             },
-            None => Err(TransformsError::SetViewMatrix("Unable to Get Mut View Mat4s Inverse")),
+            None => Err(MatrixDataErr::SetViewMatrix("Unable to Get Mut View Mat4s Inverse")),
         }
     }
 
@@ -94,26 +95,43 @@ impl Transforms {
         *self.model_mat4s_inverse.get(&entity.get_model_id()).expect("Unable to Get Model Inverse in Get Model Inverse")
     }
 
-    pub fn set_model_matrix(&mut self, id: Id, model: Mat4, inverse: Mat4) -> Result<(), TransformsError> {
+    pub fn set_model_matrix(&mut self, id: Id, model: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
         match Arc::get_mut(&mut self.model_mat4s) {
             Some(mat4s) => {
                 mat4s.insert(id, model);
             },
-            None => return Err(TransformsError::SetModelMatrix("Unable to Get Mut Model Mat4s")),
+            None => return Err(MatrixDataErr::SetModelMatrix("Unable to Get Mut Model Mat4s")),
         }
         match Arc::get_mut(&mut self.model_mat4s_inverse) {
             Some(mat4s) => {
                 mat4s.insert(id, inverse);
                 Ok(())
             },
-            None => Err(TransformsError::SetModelMatrix("Unable to Get Mut Model Mat4s Inverse")),
+            None => Err(MatrixDataErr::SetModelMatrix("Unable to Get Mut Model Mat4s Inverse")),
         }
     }
 }
 
-#[derive(Debug)]
-pub enum TransformsError {
+#[derive(Clone)]
+pub enum MatrixDataErr {
     SetPerspectiveMatrix(&'static str),
     SetViewMatrix(&'static str),
     SetModelMatrix(&'static str),
+}
+
+impl fmt::Display for MatrixDataErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &MatrixDataErr::SetPerspectiveMatrix(err) => {
+                write!(f, "{}", err);
+            },
+            &MatrixDataErr::SetViewMatrix(err) => {
+                write!(f, "{}", err);
+            },
+            &MatrixDataErr::SetModelMatrix(err) => {
+                write!(f, "{}", err);
+            },
+        }
+        Ok(())
+    }
 }
