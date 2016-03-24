@@ -15,7 +15,6 @@ struct Changes {
     view: Option<(Mat4, Mat4)>,
     model: Option<(Mat4, Mat4)>,
     dirty: bool,
-    dirty_sync: bool,
 }
 
 impl Changes {
@@ -29,7 +28,6 @@ impl Changes {
             view: None,
             model: None,
             dirty: false,
-            dirty_sync: false,
         }
     }
 }
@@ -76,10 +74,6 @@ impl Renderable {
                         Ok(()) => (),
                         Err(err) => return Err(RenderableErr::Window("Window Set Vertices",err)),
                     }
-                    match self.changes.write() {
-                        Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
-                    }.vertices = None;
                 },
                 None => (),
             }
@@ -94,10 +88,6 @@ impl Renderable {
                         Ok(()) => (),
                         Err(err) => return Err(RenderableErr::Window("Window Set Indices", err)),
                     }
-                    match self.changes.write() {
-                        Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
-                    }.indices = None;
                 },
                 None => (),
             }
@@ -112,10 +102,6 @@ impl Renderable {
                         Ok(()) => (),
                         Err(err) => return Err(RenderableErr::Window("Window Set Texture", err)),
                     }
-                    match self.changes.write() {
-                        Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
-                    }.texture = None;
                 },
                 None => (),
             }
@@ -127,10 +113,6 @@ impl Renderable {
             }.draw_method.clone() {
                 Some(draw_method) => {
                     window.set_draw_method(self.draw_method_id, draw_method);
-                    match self.changes.write() {
-                        Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
-                    }.draw_method = None;
                 },
                 None => (),
             }
@@ -148,6 +130,62 @@ impl Renderable {
                 },
                 None => (),
             }
+            match {
+                match self.changes.read() {
+                    Ok(changes) => changes,
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read View")),
+                }
+            }.view.clone() {
+                Some(view) => {
+                    match matrix_data.set_view_matrix(self.view_id, view.0, view.1) {
+                        Ok(()) => (),
+                        Err(err) => return Err(RenderableErr::MatrixData("MatrixData Set View Matrix", err)),
+                    }
+                },
+                None => (),
+            }
+            match {
+                match self.changes.read() {
+                    Ok(changes) => changes,
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read Model")),
+                }
+            }.model.clone() {
+                Some(model) => {
+                    match matrix_data.set_model_matrix(self.model_id, model.0, model.1) {
+                        Ok(()) => (),
+                        Err(err) => return Err(RenderableErr::MatrixData("MatrixData Set Model matrix", err)),
+                    }
+                },
+                None => (),
+            }
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
+            }.vertices = None;
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
+            }.indices = None;
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
+            }.texture = None;
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
+            }.draw_method = None;
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write Perspective"))
+            }.perspective = None;
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write View"))
+            }.view = None;
+            match self.changes.write() {
+                Ok(changes) => changes,
+                Err(_) => return Err(RenderableErr::Poison("Changes Write Model"))
+            }.model = None;
             match self.changes.write() {
                 Ok(changes) => changes,
                 Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
@@ -211,8 +249,8 @@ impl Renderable {
         }.perspective = Some((matrix, matrix.to_inverse()));
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty Sync")),
-        }.dirty_sync = true;
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
+        }.dirty = true;
         Ok(())
     }
 
@@ -223,8 +261,8 @@ impl Renderable {
         }.view = Some((matrix, matrix.to_inverse()));
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty Sync")),
-        }.dirty_sync = true;
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
+        }.dirty = true;
         Ok(())
     }
 
@@ -235,8 +273,8 @@ impl Renderable {
         }.model = Some((matrix, matrix.to_inverse()));
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty Sync")),
-        }.dirty_sync = true;
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
+        }.dirty = true;
         Ok(())
     }
 

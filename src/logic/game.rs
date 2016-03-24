@@ -186,7 +186,7 @@ impl<T: EntityData<T>> Game<T> {
             frames += 1;
             if now > i + 1.0 {
                 i += 1.0;
-                println!("{} {}", frames.to_string(), ticks.to_string());
+                println!("Frames: {} Ticks: {}", frames.to_string(), ticks.to_string());
                 frames = 0;
                 ticks = 0;
             }
@@ -216,13 +216,25 @@ impl<T: EntityData<T>> Game<T> {
         let mut frame = window.frame();
         for entry in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
-            Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
+            Err(err) => {
+                match frame.end() {
+                    Ok(()) => (),
+                    Err(err) => return Err(GameErr::Frame("Frame End", err)),
+                };
+                return Err(GameErr::World("World Get Mut Entity Data", err));
+            },
         }.iter_mut() {
             match entry.1.get_renderable(){
                 Some(data) => {
                     match frame.draw_entity(data, self.matrix_data.clone()) {
                         Ok(()) => (),
-                        Err(err) => return Err(GameErr::Frame("Frame Draw Entity", err)),
+                        Err(err) => {
+                            match frame.end() {
+                                Ok(()) => (),
+                                Err(err) => return Err(GameErr::Frame("Frame End", err)),
+                            };
+                            return Err(GameErr::Frame("Frame Draw Entity", err));
+                        },
                     }
                 },
                 None => (),
@@ -246,9 +258,7 @@ impl<T: EntityData<T>> Game<T> {
                     scope.execute(move || {
                         entity.tick(delta_time, world);
                     });
-
                 }
-
             });
         }
         match Arc::get_mut(&mut self.world)  {

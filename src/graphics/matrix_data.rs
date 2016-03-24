@@ -71,20 +71,6 @@ impl MatrixData {
                 Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Model Inverse", Box::new(err))),
             } * vec4
         )
-        // let p = match self.get_perspective_inverse(entity) {
-        //     Ok(mat) => mat,
-        //     Err(err) => return Err(MatrixDataErr::MatrixData(Box::new(err))),
-        // };
-        // let v = match self.get_view_inverse(entity) {
-        //     Ok(mat) => mat,
-        //     Err(err) => return Err(MatrixDataErr::MatrixData(Box::new(err))),
-        // };
-        // let m = match self.get_model_inverse(entity) {
-        //     Ok(mat) => mat,
-        //     Err(err) => return Err(MatrixDataErr::MatrixData(Box::new(err))),
-        // };
-        //
-        // return Ok(p * v * m * vec4);
     }
 
     pub fn get_perspective_matrix(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {

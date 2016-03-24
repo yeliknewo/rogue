@@ -23,9 +23,9 @@ impl EntityData<IsoData> for IsoData {
 
     }
 
-    fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), Box<Error>>{
+    fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), Box<Error>> {
         if self.renderable.is_some() {
-            match match Arc::get_mut(&mut match self.renderable.clone() {
+            match match Arc::get_mut(match self.renderable.as_mut() {
                 Some(renderable) => renderable,
                 None => return Err(Box::new(IsoDataErr::Get("Renderable Get"))),
             }) {
