@@ -256,7 +256,10 @@ impl<T: EntityData<T>> Game<T> {
                     let world = world.clone();
                     let delta_time = delta_time.clone();
                     scope.execute(move || {
-                        entity.tick(delta_time, world);
+                        match entity.tick(delta_time, world) {
+                            Ok(()) => (),
+                            Err(err) => Err(GameErr::Entity("Entity Tick", err)).unwrap(),
+                        }
                     });
                 }
             });
@@ -274,10 +277,13 @@ impl<T: EntityData<T>> Game<T> {
                                 Some(entity) => entity,
                                 None => return Err(GameErr::BadIndex("Entity Data Remove")),
                             };
-                            match Arc::get_mut(&mut entity) {
+                            match match Arc::get_mut(&mut entity) {
                                 Some(entity) => entity,
                                 None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
-                            }.tick_mut(manager);
+                            }.tick_mut(manager) {
+                                Ok(()) => (),
+                                Err(err) => return Err(GameErr::Entity("Entity Tick Mut", err)),
+                            }
                             entity_data.insert(key, entity);
                         }
                         Ok(())

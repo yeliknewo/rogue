@@ -9,8 +9,7 @@ struct Changes {
     new_position: Option<Vec3>,
     new_rotation: Option<Vec3>,
     new_scalation: Option<Vec3>,
-    dirty: bool,
-    dirty_matrix: bool,
+    dirty_tick_mut: bool,
 }
 
 impl Changes {
@@ -19,8 +18,7 @@ impl Changes {
             new_position: None,
             new_rotation: None,
             new_scalation: None,
-            dirty: false,
-            dirty_matrix: true,
+            dirty_tick_mut: false,
         }
     }
 }
@@ -48,7 +46,7 @@ impl Transform {
                 Ok(changes) => changes,
                 Err(_) => return Err(TransformErr::Poison("Changes Read Dirty")),
             }
-        }.dirty {
+        }.dirty_tick_mut {
             match self.update_pos() {
                 Ok(b) => {
                     if b {
@@ -82,15 +80,6 @@ impl Transform {
                 },
                 Err(err) => return Err(TransformErr::Transform("Self Update Sca", Box::new(err))),
             }
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(TransformErr::Poison("Changes Write Dirty")),
-            }.dirty = false;
-        }
-        if match self.changes.read() {
-            Ok(changes) => changes,
-            Err(_) => return Err(TransformErr::Poison("Changes Read Dirty Matrix")),
-        }.dirty_matrix {
             match renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position)) {
                 Ok(()) => (),
                 Err(err) => return Err(TransformErr::Renderable("Renderable Set Model", err)),
@@ -98,7 +87,7 @@ impl Transform {
             match self.changes.write() {
                 Ok(changes) => changes,
                 Err(_) => return Err(TransformErr::Poison("Changes Write Dirty Matrix")),
-            }.dirty_matrix = false;
+            }.dirty_tick_mut = false;
         }
         Ok(())
     }
@@ -162,7 +151,7 @@ impl Transform {
         match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(TransformErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_tick_mut = true;
         Ok(())
     }
 
@@ -174,7 +163,7 @@ impl Transform {
         match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(TransformErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_tick_mut = true;
         Ok(())
     }
 
@@ -186,34 +175,34 @@ impl Transform {
         match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(TransformErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_tick_mut = true;
         Ok(())
     }
 
-    fn set_position(&mut self, pos: Vec3) -> Result<(), TransformErr> {
+    pub fn set_position(&mut self, pos: Vec3) -> Result<(), TransformErr> {
         self.position = pos;
         match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(TransformErr::Poison("Changes Write Dirty matrix")),
-        }.dirty_matrix = true;
+        }.dirty_tick_mut = true;
         Ok(())
     }
 
-    fn set_rotation(&mut self, rot: Vec3) -> Result<(), TransformErr> {
+    pub fn set_rotation(&mut self, rot: Vec3) -> Result<(), TransformErr> {
         self.rotation = rot;
         match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(TransformErr::Poison("Changes Write Dirty Matrix")),
-        }.dirty_matrix = true;
+        }.dirty_tick_mut = true;
         Ok(())
     }
 
-    fn set_scalation(&mut self, sca: Vec3) -> Result<(), TransformErr> {
+    pub fn set_scalation(&mut self, sca: Vec3) -> Result<(), TransformErr> {
         self.scalation = sca;
         match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(TransformErr::Poison("Changes Write Dirty Matrix")),
-        }.dirty_matrix = true;
+        }.dirty_tick_mut = true;
         Ok(())
     }
 

@@ -6,8 +6,8 @@ use graphics::{Window, MatrixData};
 use components::{Renderable, Named, Transform};
 
 pub trait EntityData<T: EntityData<T>> : Send + Sync {
-    fn tick(&self, Arc<f64>, Arc<World<T>>);
-    fn tick_mut(&mut self, &mut IdManager);
+    fn tick(&self, Arc<f64>, Arc<World<T>>) -> Result<(), Box<Error>>;
+    fn tick_mut(&mut self, &mut IdManager) -> Result<(), Box<Error>>;
     fn render(&mut self, &mut Window, &mut MatrixData) -> Result<(), Box<Error>>;
     fn get_renderable(&self) -> Option<Arc<Renderable>>;
     fn get_named(&self) -> Option<Arc<Named>>;

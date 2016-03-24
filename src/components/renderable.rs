@@ -14,7 +14,7 @@ struct Changes {
     perspective: Option<(Mat4, Mat4)>,
     view: Option<(Mat4, Mat4)>,
     model: Option<(Mat4, Mat4)>,
-    dirty: bool,
+    dirty_render: bool,
 }
 
 impl Changes {
@@ -27,7 +27,7 @@ impl Changes {
             perspective: None,
             view: None,
             model: None,
-            dirty: false,
+            dirty_render: false,
         }
     }
 }
@@ -62,7 +62,7 @@ impl Renderable {
         if match self.changes.read(){
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Read Dirty")),
-        }.dirty {
+        }.dirty_render {
             match {
                 match self.changes.read() {
                     Ok(changes) => changes,
@@ -189,128 +189,93 @@ impl Renderable {
             match self.changes.write() {
                 Ok(changes) => changes,
                 Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-            }.dirty = false;
+            }.dirty_render = false;
         }
         Ok(())
     }
 
     pub fn set_vertices(&mut self, vertices: Vec<Vertex>) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
         }.vertices = Some(vertices);
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
     }
 
     pub fn set_indices(&mut self, indices: Vec<Index>) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
         }.indices = Some(indices);
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
     }
 
     pub fn set_texture(&mut self, texture: &'static [u8]) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
         }.texture = Some(texture);
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
     }
 
     pub fn set_draw_method(&mut self, draw_method: DrawMethod) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
         }.draw_method = Some(draw_method);
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
     }
 
     pub fn set_perspective(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Perspective")),
         }.perspective = Some((matrix, matrix.to_inverse()));
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
     }
 
     pub fn set_view(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write View")),
         }.view = Some((matrix, matrix.to_inverse()));
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
     }
 
     pub fn set_model(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Model")),
         }.model = Some((matrix, matrix.to_inverse()));
-        match self.changes.write(){
+        match self.changes.write() {
             Ok(changes) => changes,
             Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty = true;
+        }.dirty_render = true;
         Ok(())
-    }
-
-    pub fn with_vertex_id(mut self, id: Id) -> Renderable {
-        self.set_vertex_id(id);
-        self
-    }
-
-    pub fn with_index_id(mut self, id: Id) -> Renderable {
-        self.set_index_id(id);
-        self
-    }
-
-    pub fn with_texture_id(mut self, id: Id) -> Renderable {
-        self.set_texture_id(id);
-        self
-    }
-
-    pub fn with_draw_method_id(mut self, id: Id) -> Renderable {
-        self.set_draw_method_id(id);
-        self
-    }
-
-    pub fn with_perspective_id(mut self, id: Id) -> Renderable {
-        self.set_perspective_id(id);
-        self
-    }
-
-    pub fn with_view_id(mut self, id: Id) -> Renderable {
-        self.set_view_id(id);
-        self
-    }
-
-    pub fn with_model_id(mut self, id: Id) -> Renderable {
-        self.set_model_id(id);
-        self
     }
 
     pub fn set_vertex_id(&mut self, id: Id) {
