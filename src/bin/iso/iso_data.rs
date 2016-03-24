@@ -25,12 +25,15 @@ impl EntityData<IsoData> for IsoData {
 
     fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), Box<Error>>{
         if self.renderable.is_some() {
-            match match Arc::get_mut(&mut self.renderable.clone().unwrap()) {
+            match match Arc::get_mut(&mut match self.renderable.clone() {
                 Some(renderable) => renderable,
-                None => return Err(Box::new(IsoDataErr::GetMut)),
+                None => return Err(Box::new(IsoDataErr::Get("Renderable Get"))),
+            }) {
+                Some(renderable) => renderable,
+                None => return Err(Box::new(IsoDataErr::GetMut("Arc Renderable Get Mut"))),
             }.render(window, matrix_data) {
                 Ok(()) => (),
-                Err(err) => return Err(IsoDataErr::Renderable(err)),
+                Err(err) => return Err(Box::new(IsoDataErr::Renderable("Renderable Render", err))),
             };
         }
         Ok(())
@@ -81,21 +84,27 @@ impl IsoData {
 
 #[derive(Debug)]
 pub enum IsoDataErr {
-    Renderable(RenderableErr),
-    GetMut,
+    Renderable(&'static str, RenderableErr),
+    GetMut(&'static str),
+    Get(&'static str),
 }
 
 impl fmt::Display for IsoDataErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
+        match *self {
+            IsoDataErr::Renderable(_, ref err) => err.fmt(f),
+            IsoDataErr::GetMut(_) => write!(f, "Get Mut was None"),
+            IsoDataErr::Get(_) => write!(f, "Get was None"),
+        }
     }
 }
 
 impl Error for IsoDataErr {
     fn description(&self) -> &str {
         match *self {
-            IsoDataErr::Renderable(err) => err.get_description(),
-            IsoDataErr::GetMut => "Get Mut was None",
+            IsoDataErr::Renderable(_, ref err) => err.description(),
+            IsoDataErr::GetMut(_) => "Get Mut was None",
+            IsoDataErr::Get(_) => "Get was None",
         }
     }
 }

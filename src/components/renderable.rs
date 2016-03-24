@@ -1,8 +1,9 @@
 use std::fmt;
 use std::sync::{Arc, RwLock};
+use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
-use graphics::{Window, Vertex, Index, DrawMethod, MatrixData, MatrixDataErr};
+use graphics::{Window, WindowErr, Vertex, Index, DrawMethod, MatrixData, MatrixDataErr};
 use math::{Mat4};
 
 struct Changes {
@@ -62,19 +63,22 @@ impl Renderable {
     pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
         if match self.changes.read(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Render("Unable to Read Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Read Dirty")),
         }.dirty {
             match {
                 match self.changes.read() {
                     Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Render("Unable to Read Changes")),
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read Vertices")),
                 }
             }.vertices.clone() {
                 Some(vertices) => {
-                    window.set_vertices(self.vertex_id, vertices);
+                    match window.set_vertices(self.vertex_id, vertices) {
+                        Ok(()) => (),
+                        Err(err) => return Err(RenderableErr::Window("Window Set Vertices",err)),
+                    }
                     match self.changes.write() {
                         Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Render("Unable to Write Changes")),
+                        Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
                     }.vertices = None;
                 },
                 None => (),
@@ -82,14 +86,17 @@ impl Renderable {
             match {
                 match self.changes.read() {
                     Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Render("Unable to Read Changes")),
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read Indices")),
                 }
             }.indices.clone() {
                 Some(indices) => {
-                    window.set_indices(self.index_id, indices);
+                    match window.set_indices(self.index_id, indices) {
+                        Ok(()) => (),
+                        Err(err) => return Err(RenderableErr::Window("Window Set Indices", err)),
+                    }
                     match self.changes.write() {
                         Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Render("Unable to Write Changes")),
+                        Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
                     }.indices = None;
                 },
                 None => (),
@@ -97,14 +104,17 @@ impl Renderable {
             match {
                 match self.changes.read() {
                     Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Render("Unable to Read Changes")),
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read Texture")),
                 }
             }.texture {
                 Some(texture) => {
-                    window.set_texture(self.texture_id, texture);
+                    match window.set_texture(self.texture_id, texture) {
+                        Ok(()) => (),
+                        Err(err) => return Err(RenderableErr::Window("Window Set Texture", err)),
+                    }
                     match self.changes.write() {
                         Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Render("Unable to Write Changes")),
+                        Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
                     }.texture = None;
                 },
                 None => (),
@@ -112,14 +122,14 @@ impl Renderable {
             match {
                 match self.changes.read() {
                     Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Render("Unable to Read Changes")),
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read DrawMethod")),
                 }
             }.draw_method.clone() {
                 Some(draw_method) => {
                     window.set_draw_method(self.draw_method_id, draw_method);
                     match self.changes.write() {
                         Ok(changes) => changes,
-                        Err(_) => return Err(RenderableErr::Render("Unable to Write Changes")),
+                        Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
                     }.draw_method = None;
                 },
                 None => (),
@@ -127,20 +137,20 @@ impl Renderable {
             match {
                 match self.changes.read() {
                     Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Render("Unable to Read Changes")),
+                    Err(_) => return Err(RenderableErr::Poison("Changes Read Perspective")),
                 }
             }.perspective.clone() {
                 Some(perspective) => {
                     match matrix_data.set_perspective_matrix(self.perspective_id, perspective.0, perspective.1) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::RenderMatrixData(err)),
+                        Err(err) => return Err(RenderableErr::MatrixData("MatrixData Set Perspective Matrix", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.write() {
                 Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Render("Unable to Write Changes")),
+                Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
             }.dirty = false;
         }
         Ok(())
@@ -149,11 +159,11 @@ impl Renderable {
     pub fn set_vertices(&mut self, vertices: Vec<Vertex>) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetVertices("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
         }.vertices = Some(vertices);
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetVertices("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
         }.dirty = true;
         Ok(())
     }
@@ -161,11 +171,11 @@ impl Renderable {
     pub fn set_indices(&mut self, indices: Vec<Index>) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetIndices("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
         }.indices = Some(indices);
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetIndices("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
         }.dirty = true;
         Ok(())
     }
@@ -173,11 +183,11 @@ impl Renderable {
     pub fn set_texture(&mut self, texture: &'static [u8]) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetTexture("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
         }.texture = Some(texture);
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetTexture("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
         }.dirty = true;
         Ok(())
     }
@@ -185,11 +195,11 @@ impl Renderable {
     pub fn set_draw_method(&mut self, draw_method: DrawMethod) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetDrawMethod("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
         }.draw_method = Some(draw_method);
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetDrawMethod("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
         }.dirty = true;
         Ok(())
     }
@@ -197,11 +207,11 @@ impl Renderable {
     pub fn set_perspective(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetPerspective("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Perspective")),
         }.perspective = Some((matrix, matrix.to_inverse()));
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetPerspective("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty Sync")),
         }.dirty_sync = true;
         Ok(())
     }
@@ -209,11 +219,11 @@ impl Renderable {
     pub fn set_view(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetView("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write View")),
         }.view = Some((matrix, matrix.to_inverse()));
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetView("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty Sync")),
         }.dirty_sync = true;
         Ok(())
     }
@@ -221,11 +231,11 @@ impl Renderable {
     pub fn set_model(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetModel("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Model")),
         }.model = Some((matrix, matrix.to_inverse()));
         match self.changes.write(){
             Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::SetModel("Unable to Write Changes")),
+            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty Sync")),
         }.dirty_sync = true;
         Ok(())
     }
@@ -322,49 +332,29 @@ impl Renderable {
     }
 }
 
+#[derive(Debug)]
 pub enum RenderableErr {
-    Render(&'static str),
-    RenderMatrixData(MatrixDataErr),
-    SetVertices(&'static str),
-    SetIndices(&'static str),
-    SetTexture(&'static str),
-    SetDrawMethod(&'static str),
-    SetPerspective(&'static str),
-    SetView(&'static str),
-    SetModel(&'static str),
+    Poison(&'static str),
+    MatrixData(&'static str, MatrixDataErr),
+    Window(&'static str, WindowErr),
 }
 
 impl fmt::Display for RenderableErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &RenderableErr::Render(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::RenderMatrixData(ref err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetVertices(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetIndices(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetTexture(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetDrawMethod(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetPerspective(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetView(err) => {
-                write!(f, "{}", err);
-            },
-            &RenderableErr::SetModel(err) => {
-                write!(f, "{}", err);
-            },
+        match *self {
+            RenderableErr::Poison(_) => write!(f, "Thread was Poisoned During R/W"),
+            RenderableErr::MatrixData(_, ref err) => err.fmt(f),
+            RenderableErr::Window(_, ref err) => err.fmt(f),
         }
-        Ok(())
+    }
+}
+
+impl Error for RenderableErr {
+    fn description(&self) -> &str {
+        match *self {
+            RenderableErr::Poison(_) => "Thread was Poisoned",
+            RenderableErr::MatrixData(_, ref err) => err.description(),
+            RenderableErr::Window(_, ref err) => err.description(),
+        }
     }
 }

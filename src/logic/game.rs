@@ -8,7 +8,7 @@ use glium::glutin::Event as WindowEvent;
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
 use logic::{World, WorldErr, EntityData, IdManager};
 use math::{Vec2};
-use graphics::{Window, MatrixData};
+use graphics::{Window, MatrixData, FrameErr};
 
 pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
@@ -36,7 +36,7 @@ impl<T: EntityData<T>> Game<T> {
     pub fn get_mut_world(&mut self) -> Result<&mut World<T>, GameErr> {
         match Arc::get_mut(&mut self.world) {
             Some(world) => Ok(world),
-            None => Err(GameErr::GetMut),
+            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
     }
 
@@ -53,10 +53,10 @@ impl<T: EntityData<T>> Game<T> {
             Some(world) => {
                 match world.set_key(key_code, Button::new(tick_number, element_state)) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(GameErr::World(err)),
+                    Err(err) => Err(GameErr::World("World Set Key", err)),
                 }
             },
-            None => Err(GameErr::GetMut),
+            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
     }
 
@@ -65,10 +65,10 @@ impl<T: EntityData<T>> Game<T> {
             Some(world) => {
                 match world.set_mouse_button(mouse_button, Button::new(tick_number, element_state)) {
                     Ok(()) => Ok(()),
-                    Err(err) => Err(GameErr::World(err)),
+                    Err(err) => Err(GameErr::World("World Set Mouse Button", err)),
                 }
             }
-            None => Err(GameErr::GetMut),
+            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
     }
 
@@ -77,10 +77,10 @@ impl<T: EntityData<T>> Game<T> {
             Some(world) => {
                 match world.set_mouse_position(Vec2::from([mouse_pos.0 as f32, mouse_pos.1 as f32])) {
                     Ok(()) => Ok(()),
-                    Err(err) => Err(GameErr::World(err)),
+                    Err(err) => Err(GameErr::World("World Set Mouse Position", err)),
                 }
             },
-            None => Err(GameErr::GetMut),
+            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
     }
 
@@ -89,10 +89,10 @@ impl<T: EntityData<T>> Game<T> {
             Some(world) => {
                 match world.set_resolution(Vec2::from([resolution.0 as f32, resolution.1 as f32])) {
                     Ok(()) => Ok(()),
-                    Err(err) => Err(GameErr::World(err)),
+                    Err(err) => Err(GameErr::World("World Set Resolution", err)),
                 }
             },
-            None => Err(GameErr::GetMut),
+            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
     }
 
@@ -119,7 +119,7 @@ impl<T: EntityData<T>> Game<T> {
                     match event {
                         WindowEvent::Resized(width, height) => match self.update_resolution((width, height)) {
                             Ok(()) => (),
-                            Err(err) => return Err(GameErr::Game(Box::new(err))),
+                            Err(err) => return Err(GameErr::Game("Self Update Resolution", Box::new(err))),
                         },
                         // WindowEvent::Moved(x, y) => {
                         //
@@ -141,20 +141,20 @@ impl<T: EntityData<T>> Game<T> {
                         WindowEvent::KeyboardInput(element_state, _, virtual_key_code) => match virtual_key_code {
                             Some(virtual_key_code) => match self.update_keyboard(tick_number, virtual_key_code, element_state) {
                                 Ok(()) => (),
-                                Err(err) => return Err(GameErr::Game(Box::new(err))),
+                                Err(err) => return Err(GameErr::Game("Self Update Keyboard", Box::new(err))),
                             },
                             None => (),
                         },
                         WindowEvent::MouseMoved(pos) => match self.update_mouse_pos(pos) {
                             Ok(()) => (),
-                            Err(err) => return Err(GameErr::Game(Box::new(err))),
+                            Err(err) => return Err(GameErr::Game("Self Update Mouse Pos", Box::new(err))),
                         },
                         // WindowEvent::MouseWheel(mouse_scroll_data) => {
                         //
                         // },
                         WindowEvent::MouseInput(element_state, mouse_button) => match self.update_mouse_button(tick_number, mouse_button, element_state) {
                             Ok(()) => (),
-                            Err(err) => return Err(GameErr::Game(Box::new(err))),
+                            Err(err) => return Err(GameErr::Game("Self Update Mouse Button", Box::new(err))),
                         },
                         // WindowEvent::Awakened => {
                         //
@@ -173,7 +173,7 @@ impl<T: EntityData<T>> Game<T> {
                 }
                 match self.tick(tps_s, manager) {
                     Ok(()) => (),
-                    Err(err) => return Err(GameErr::Game(Box::new(err))),
+                    Err(err) => return Err(GameErr::Game("Self Tick", Box::new(err))),
                 };
                 delta_time -= tps_s;
                 ticks += 1;
@@ -181,7 +181,7 @@ impl<T: EntityData<T>> Game<T> {
             }
             match self.render(window) {
                 Ok(()) => (),
-                Err(err) => return Err(GameErr::Game(Box::new(err))),
+                Err(err) => return Err(GameErr::Game("Self Render", Box::new(err))),
             }
             frames += 1;
             if now > i + 1.0 {
@@ -196,37 +196,42 @@ impl<T: EntityData<T>> Game<T> {
     fn render(&mut self, window: &mut Window) -> Result<(), GameErr> {
         let mut world = match Arc::get_mut(&mut self.world) {
             Some(world) => world,
-            None => return Err(GameErr::GetMut),
+            None => return Err(GameErr::GetMut("Arc Get Mut Self World")),
         };
         for (_, entity) in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
-            Err(err) => return Err(GameErr::World(err)),
+            Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
         }.iter_mut() {
             match match Arc::get_mut(entity) {
                     Some(entity) => entity,
-                    None => return Err(GameErr::GetMut),
+                    None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
                 }.render(window, match Arc::get_mut(&mut self.matrix_data) {
                     Some(matrix_data) => matrix_data,
-                    None => return Err(GameErr::GetMut),
+                    None => return Err(GameErr::GetMut("Arc Get Mut Self Matrix Data")),
                 }) {
                 Ok(()) => (),
-                Err(err) => return Err(GameErr::Entity(err)),
+                Err(err) => return Err(GameErr::Entity("Entity Render", err)),
             }
         }
         let mut frame = window.frame();
         for entry in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
-            Err(err) => return Err(GameErr::World(err)),
+            Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
         }.iter_mut() {
             match entry.1.get_renderable(){
                 Some(data) => {
-                    frame.draw_entity(data, self.matrix_data.clone());
+                    match frame.draw_entity(data, self.matrix_data.clone()) {
+                        Ok(()) => (),
+                        Err(err) => return Err(GameErr::Frame("Frame Draw Entity", err)),
+                    }
                 },
                 None => (),
             }
         }
-        frame.end();
-        Ok(())
+        match frame.end() {
+            Ok(()) => Ok(()),
+            Err(err) => Err(GameErr::Frame("Frame End", err)),
+        }
     }
 
     fn tick(&mut self, delta_time: f64, manager: &mut IdManager) -> Result<(), GameErr> {
@@ -257,41 +262,43 @@ impl<T: EntityData<T>> Game<T> {
                         for key in keys {
                             let mut entity = match entity_data.remove(&key) {
                                 Some(entity) => entity,
-                                None => return Err(GameErr::BadIndex),
+                                None => return Err(GameErr::BadIndex("Entity Data Remove")),
                             };
                             match Arc::get_mut(&mut entity) {
                                 Some(entity) => entity,
-                                None => return Err(GameErr::GetMut),
+                                None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
                             }.tick_mut(manager);
                             entity_data.insert(key, entity);
                         }
                         Ok(())
                     },
-                    Err(err) => Err(GameErr::World(err)),
+                    Err(err) => Err(GameErr::World("World Get Mut Entity Data", err)),
                 }
             },
-            None => Err(GameErr::GetMut),
+            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
     }
 }
 
 #[derive(Debug)]
 pub enum GameErr {
-    World(WorldErr),
-    Game(Box<GameErr>),
-    Entity(Box<Error>),
-    GetMut,
-    BadIndex,
+    World(&'static str, WorldErr),
+    Game(&'static str, Box<GameErr>),
+    Entity(&'static str, Box<Error>),
+    Frame(&'static str, FrameErr),
+    GetMut(&'static str),
+    BadIndex(&'static str),
 }
 
 impl fmt::Display for GameErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            GameErr::World(ref err) => err.fmt(f),
-            GameErr::Game(ref err) => err.fmt(f),
-            GameErr::Entity(ref err) => err.fmt(f),
-            GameErr::GetMut => write!(f, "Get Mut was None"),
-            GameErr::BadIndex => write!(f, "Index was None"),
+            GameErr::World(_, ref err) => err.fmt(f),
+            GameErr::Game(_, ref err) => err.fmt(f),
+            GameErr::Entity(_, ref err) => err.fmt(f),
+            GameErr::Frame(_, ref err) => err.fmt(f),
+            GameErr::GetMut(_) => write!(f, "Get Mut was None"),
+            GameErr::BadIndex(_) => write!(f, "Index was None"),
         }
     }
 }
@@ -299,11 +306,12 @@ impl fmt::Display for GameErr {
 impl Error for GameErr {
     fn description(&self) -> &str {
         match *self {
-            GameErr::World(ref err) => err.description(),
-            GameErr::Game(ref err) => err.description(),
-            GameErr::Entity(ref err) => err.description(),
-            GameErr::GetMut => "Get Mut was None",
-            GameErr::BadIndex => "Index was None",
+            GameErr::World(_, ref err) => err.description(),
+            GameErr::Game(_, ref err) => err.description(),
+            GameErr::Entity(_, ref err) => err.description(),
+            GameErr::Frame(_, ref err) => err.description(),
+            GameErr::GetMut(_) => "Get Mut was None",
+            GameErr::BadIndex(_) => "Index was None",
         }
     }
 }

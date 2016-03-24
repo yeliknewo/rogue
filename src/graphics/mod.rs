@@ -4,7 +4,7 @@ mod index;
 mod matrix_data;
 mod draw_method;
 
-pub use self::window::{Window, WindowArgs};
+pub use self::window::{Window, WindowErr, WindowArgs, Frame, FrameErr};
 pub use self::vertex::{Vertex, init_vertex};
 pub use self::index::{Index};
 pub use self::matrix_data::{MatrixData, MatrixDataErr};

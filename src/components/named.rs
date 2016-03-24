@@ -1,4 +1,5 @@
 use std::fmt;
+use std::error::Error;
 
 use logic::{EntityData, World, WorldErr, Id};
 
@@ -16,7 +17,7 @@ impl Named {
                     }
                 )
             },
-            Err(err) => Err(NamedErr::New(err)),
+            Err(err) => Err(NamedErr::World("World Register Name", err)),
         }
     }
 
@@ -25,17 +26,23 @@ impl Named {
     }
 }
 
+#[derive(Debug)]
 pub enum NamedErr {
-    New(WorldErr),
+    World(&'static str, WorldErr),
 }
 
 impl fmt::Display for NamedErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &NamedErr::New(ref err) => {
-                write!(f, "{}", err);
-            },
+        match *self {
+            NamedErr::World(_, ref err) => err.fmt(f),
         }
-        Ok(())
+    }
+}
+
+impl Error for NamedErr {
+    fn description(&self) -> &str {
+        match *self {
+            NamedErr::World(_, ref err) => err.description(),
+        }
     }
 }

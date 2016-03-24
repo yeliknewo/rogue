@@ -32,7 +32,7 @@ impl<T: EntityData<T>> World<T> {
                 keyboard.set_key_state(key_code, key);
                 Ok(())
             },
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self Keyboard")),
         }
     }
 
@@ -42,7 +42,7 @@ impl<T: EntityData<T>> World<T> {
                 mouse.set_mouse_button(mouse_button, button);
                 Ok(())
             },
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self Mouse")),
         }
     }
 
@@ -52,7 +52,7 @@ impl<T: EntityData<T>> World<T> {
                 mouse.set_mouse_position(pos);
                 Ok(())
             },
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self Mouse")),
         }
     }
 
@@ -62,7 +62,7 @@ impl<T: EntityData<T>> World<T> {
                 display.set_resolution(resolution);
                 Ok(())
             },
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self Display")),
         }
     }
 
@@ -93,7 +93,7 @@ impl<T: EntityData<T>> World<T> {
     pub fn get_mut_entity_data(&mut self) -> Result<&mut HashMap<Id, Arc<T>>, WorldErr> {
         match Arc::get_mut(&mut self.entity_data) {
             Some(entity_data) => Ok(entity_data),
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self EntityData")),
         }
     }
 
@@ -103,7 +103,7 @@ impl<T: EntityData<T>> World<T> {
                 entity_data.insert(entity.get_id(), Arc::new(entity));
                 Ok(())
             },
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self EntityData")),
         }
     }
 
@@ -134,13 +134,13 @@ impl<T: EntityData<T>> World<T> {
         match Arc::get_mut(&mut self.names) {
             Some(names) => {
                 if names.contains_key(name) {
-                    Err(WorldErr::InvalidName)
+                    Err(WorldErr::InvalidName("Names ContainsKey Name"))
                 } else {
                     names.insert(name, id);
                     Ok(())
                 }
             },
-            None => Err(WorldErr::GetMut),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self Names")),
         }
     }
 
@@ -150,22 +150,22 @@ impl<T: EntityData<T>> World<T> {
                 names.remove(name);
                 Ok(())
             },
-            None => Err(WorldErr::GetMut)
+            None => Err(WorldErr::GetMut("Arc Get Mut Self Names"))
         }
     }
 }
 
 #[derive(Debug)]
 pub enum WorldErr {
-    GetMut,
-    InvalidName,
+    GetMut(&'static str),
+    InvalidName(&'static str),
 }
 
 impl fmt::Display for WorldErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            WorldErr::GetMut => write!(f, "Get Mut was None"),
-            WorldErr::InvalidName => write!(f, "Name was already taken"),
+            WorldErr::GetMut(_) => write!(f, "Get Mut was None"),
+            WorldErr::InvalidName(_) => write!(f, "Name was already taken"),
         }
     }
 }
@@ -173,8 +173,8 @@ impl fmt::Display for WorldErr {
 impl Error for WorldErr {
     fn description(&self) -> &str {
         match *self {
-            WorldErr::GetMut => "Get Mut was None",
-            WorldErr::InvalidName => "Invalid Name",
+            WorldErr::GetMut(_) => "Get Mut was None",
+            WorldErr::InvalidName(_) => "Invalid Name",
         }
     }
 }

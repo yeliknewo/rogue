@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 use std::collections::{HashMap};
 use std::fmt;
+use std::error::Error;
 
 use logic::{Id};
 use math::{Mat4, Vec2, Vec3, Vec4};
@@ -27,24 +28,77 @@ impl MatrixData {
         }
     }
 
-    pub fn backwards2(&self, vec2: Vec2, entity: &Renderable) -> Vec2 {
-        Vec2::from(self.get_perspective_inverse(entity) * self.get_view_inverse(entity) * self.get_model_inverse(entity) * vec2.to_vec4(0.0, 0.0))
+    pub fn backwards2(&self, vec2: Vec2, entity: &Renderable) -> Result<Vec2, MatrixDataErr> {
+        Ok(
+            Vec2::from(match self.get_perspective_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Perspective Inverse", Box::new(err))),
+            } * match self.get_view_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get View Inverse", Box::new(err))),
+            } * match self.get_model_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Model Inverse", Box::new(err))),
+            } * vec2.to_vec4(0.0, 0.0))
+        )
     }
 
-    pub fn backwards3(&self, vec3: Vec3, entity: &Renderable) -> Vec3 {
-        Vec3::from(self.get_perspective_inverse(entity) * self.get_view_inverse(entity) * self.get_model_inverse(entity) * vec3.to_vec4(0.0))
+    pub fn backwards3(&self, vec3: Vec3, entity: &Renderable) -> Result<Vec3, MatrixDataErr> {
+        Ok(
+            Vec3::from(match self.get_perspective_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Perspective Inverse", Box::new(err))),
+            } * match self.get_view_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get View Inverse", Box::new(err))),
+            } * match self.get_model_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Model Inverse", Box::new(err))),
+            } * vec3.to_vec4(0.0))
+        )
     }
 
-    pub fn backwards4(&self, vec4: Vec4, entity: &Renderable) -> Vec4 {
-        self.get_perspective_inverse(entity) * self.get_view_inverse(entity) * self.get_model_inverse(entity) * vec4
+    pub fn backwards4(&self, vec4: Vec4, entity: &Renderable) -> Result<Vec4, MatrixDataErr> {
+        Ok(
+            match self.get_perspective_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Perspective Inverse", Box::new(err))),
+            } * match self.get_view_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get View Inverse", Box::new(err))),
+            } * match self.get_model_inverse(entity) {
+                Ok(mat) => mat,
+                Err(err) => return Err(MatrixDataErr::MatrixData("Self Get Model Inverse", Box::new(err))),
+            } * vec4
+        )
+        // let p = match self.get_perspective_inverse(entity) {
+        //     Ok(mat) => mat,
+        //     Err(err) => return Err(MatrixDataErr::MatrixData(Box::new(err))),
+        // };
+        // let v = match self.get_view_inverse(entity) {
+        //     Ok(mat) => mat,
+        //     Err(err) => return Err(MatrixDataErr::MatrixData(Box::new(err))),
+        // };
+        // let m = match self.get_model_inverse(entity) {
+        //     Ok(mat) => mat,
+        //     Err(err) => return Err(MatrixDataErr::MatrixData(Box::new(err))),
+        // };
+        //
+        // return Ok(p * v * m * vec4);
     }
 
-    pub fn get_perspective_matrix(&self, entity: &Renderable) -> Mat4 {
-        *self.perspective_mat4s.get(&entity.get_perspective_id()).expect("Unable to Get Perspective in Get Perspective")
+    pub fn get_perspective_matrix(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {
+        match self.perspective_mat4s.get(&entity.get_view_id()) {
+            Some(matrix) => Ok(*matrix),
+            None => Err(MatrixDataErr::Get("Self Perspective Mat4s Get")),
+        }
     }
 
-    pub fn get_perspective_inverse(&self, entity: &Renderable) -> Mat4 {
-        *self.perspective_mat4s_inverse.get(&entity.get_perspective_id()).expect("Unable to Get Perspective Inverse in Get Perspective Inverse")
+    pub fn get_perspective_inverse(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {
+        match self.perspective_mat4s_inverse.get(&entity.get_view_id()) {
+            Some(matrix) => Ok(*matrix),
+            None => Err(MatrixDataErr::Get("Self Perspective Mat4s Inverse Get")),
+        }
     }
 
     pub fn set_perspective_matrix(&mut self, id: Id, perspective: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
@@ -52,23 +106,29 @@ impl MatrixData {
             Some(mat4s) => {
                 mat4s.insert(id, perspective);
             },
-            None => return Err(MatrixDataErr::SetPerspectiveMatrix("Unable to Get Mut Perspective Mat4s")),
+            None => return Err(MatrixDataErr::GetMut("Arc Get Mut Self Perspective Mat4s")),
         }
         match Arc::get_mut(&mut self.perspective_mat4s_inverse) {
             Some(mat4s) => {
                 mat4s.insert(id, inverse);
                 Ok(())
             },
-            None => Err(MatrixDataErr::SetPerspectiveMatrix("Unable to Get Mut Perspective Mat4s Inverse")),
+            None => Err(MatrixDataErr::GetMut("Arc Get Mut Self Perspective Mat4s Inverse")),
         }
     }
 
-    pub fn get_view_matrix(&self, entity: &Renderable) -> Mat4 {
-        *self.view_mat4s.get(&entity.get_view_id()).expect("Unable to Get View in Get View")
+    pub fn get_view_matrix(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {
+        match self.view_mat4s.get(&entity.get_view_id()) {
+            Some(matrix) => Ok(*matrix),
+            None => Err(MatrixDataErr::Get("Self View Mat4s Get")),
+        }
     }
 
-    pub fn get_view_inverse(&self, entity: &Renderable) -> Mat4 {
-        *self.view_mat4s_inverse.get(&entity.get_view_id()).expect("Unable to Get View Inverse in Get View Inverse")
+    pub fn get_view_inverse(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {
+        match self.view_mat4s_inverse.get(&entity.get_view_id()) {
+            Some(matrix) => Ok(*matrix),
+            None => Err(MatrixDataErr::Get("Self View Mat4s Inverse Get")),
+        }
     }
 
     pub fn set_view_matrix(&mut self, id: Id, view: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
@@ -76,23 +136,29 @@ impl MatrixData {
             Some(mat4s) => {
                 mat4s.insert(id, view);
             },
-            None => return Err(MatrixDataErr::SetViewMatrix("Unable to Get Mut View Mat4s")),
+            None => return Err(MatrixDataErr::GetMut("Arc Get Mut Self View Mat4s")),
         }
         match Arc::get_mut(&mut self.view_mat4s_inverse) {
             Some(mat4s) => {
                 mat4s.insert(id, inverse);
                 Ok(())
             },
-            None => Err(MatrixDataErr::SetViewMatrix("Unable to Get Mut View Mat4s Inverse")),
+            None => Err(MatrixDataErr::GetMut("Arc Get Mut Self View Mat4s Inverse")),
         }
     }
 
-    pub fn get_model_matrix(&self, entity: &Renderable) -> Mat4 {
-        *self.model_mat4s.get(&entity.get_model_id()).expect("Unable to Get Model in Get Model")
+    pub fn get_model_matrix(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {
+        match self.model_mat4s.get(&entity.get_model_id()) {
+            Some(matrix) => Ok(*matrix),
+            None => Err(MatrixDataErr::Get("Self Model Mat4s Get")),
+        }
     }
 
-    pub fn get_model_inverse(&self, entity: &Renderable) -> Mat4 {
-        *self.model_mat4s_inverse.get(&entity.get_model_id()).expect("Unable to Get Model Inverse in Get Model Inverse")
+    pub fn get_model_inverse(&self, entity: &Renderable) -> Result<Mat4, MatrixDataErr> {
+        match self.model_mat4s_inverse.get(&entity.get_model_id()) {
+            Some(matrix) => Ok(*matrix),
+            None => Err(MatrixDataErr::Get("Self Model Mat4s Inverse Get")),
+        }
     }
 
     pub fn set_model_matrix(&mut self, id: Id, model: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
@@ -100,38 +166,41 @@ impl MatrixData {
             Some(mat4s) => {
                 mat4s.insert(id, model);
             },
-            None => return Err(MatrixDataErr::SetModelMatrix("Unable to Get Mut Model Mat4s")),
+            None => return Err(MatrixDataErr::GetMut("Arc Get Mut Self Model Mat4s")),
         }
         match Arc::get_mut(&mut self.model_mat4s_inverse) {
             Some(mat4s) => {
                 mat4s.insert(id, inverse);
                 Ok(())
             },
-            None => Err(MatrixDataErr::SetModelMatrix("Unable to Get Mut Model Mat4s Inverse")),
+            None => Err(MatrixDataErr::GetMut("Arc Get Mut Self Model Mat4s Inverse")),
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug)]
 pub enum MatrixDataErr {
-    SetPerspectiveMatrix(&'static str),
-    SetViewMatrix(&'static str),
-    SetModelMatrix(&'static str),
+    Get(&'static str),
+    GetMut(&'static str),
+    MatrixData(&'static str, Box<MatrixDataErr>)
 }
 
 impl fmt::Display for MatrixDataErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &MatrixDataErr::SetPerspectiveMatrix(err) => {
-                write!(f, "{}", err);
-            },
-            &MatrixDataErr::SetViewMatrix(err) => {
-                write!(f, "{}", err);
-            },
-            &MatrixDataErr::SetModelMatrix(err) => {
-                write!(f, "{}", err);
-            },
+        match *self {
+            MatrixDataErr::Get(_) => write!(f, "Get was None"),
+            MatrixDataErr::GetMut(_) => write!(f, "Get Mut was None"),
+            MatrixDataErr::MatrixData(_, ref err) => err.fmt(f),
         }
-        Ok(())
+    }
+}
+
+impl Error for MatrixDataErr {
+    fn description(&self) -> &str {
+        match *self {
+            MatrixDataErr::Get(_) => "Get was None",
+            MatrixDataErr::GetMut(_) => "Get Mut was None",
+            MatrixDataErr::MatrixData(_, ref err) => err.description(),
+        }
     }
 }
