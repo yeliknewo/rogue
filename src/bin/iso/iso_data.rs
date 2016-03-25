@@ -39,29 +39,43 @@ impl EntityData<IsoData> for IsoData {
     }
 
     fn tick_mut(&mut self, manager: &mut IdManager) -> Result<(), Box<Error>> {
-        if self.transform.is_some() && self.renderable.is_some() {
-            match
-                match Arc::get_mut(
-                    match self.transform.as_mut() {
-                        Some(transform) => transform,
-                        None => return Err(Box::new(IsoDataErr::Get("Self Transform As Mut"))),
-                    }
-                ) {
-                    Some(transform) => transform,
-                    None => return Err(Box::new(IsoDataErr::GetMut("Arc Transform Get Mut"))),
-                }.tick_mut(
-                    match Arc::get_mut(match self.renderable.as_mut() {
-                        Some(renderable) => renderable,
-                        None => return Err(Box::new(IsoDataErr::Get("Self Renderable As Mut"))),
-                    }
-                ) {
-                    Some(renderable) => renderable,
-                    None => return Err(Box::new(IsoDataErr::GetMut("Arc Renderable Get Mut"))),
-                })
-            {
-                Ok(()) => (),
-                Err(err) => return Err(Box::new(IsoDataErr::Transform("Self Transform Tick Mut", err))),
-            }
+        match self.transform.as_mut() {
+            Some(transform) => {
+                match Arc::get_mut(transform) {
+                    Some(transform) => {
+                        match self.renderable.as_mut() {
+                            Some(renderable) => {
+                                match Arc::get_mut(renderable) {
+                                    Some(renderable) => {
+                                        match transform.tick_mut(renderable) {
+                                            Ok(()) => (),
+                                            Err(err) => return Err(Box::new(IsoDataErr::Transform("Transform Tick Mut", err))),
+                                        }
+                                    },
+                                    None => return Err(Box::new(IsoDataErr::GetMut("Arc Get Mut Renderable"))),
+                                }
+                            },
+                            None => return Err(Box::new(IsoDataErr::BadComponentSetup("Transform Requires Renderable"))),
+                        }
+                    },
+                    None => return Err(Box::new(IsoDataErr::GetMut("Arc Get Mut Transform"))),
+                }
+            },
+            None => (),
+        }
+        match self.tile.as_mut() {
+            Some(tile) => {
+                match Arc::get_mut(tile) {
+                    Some(tile) => {
+                        match tile.tick_mut() {
+                            Ok(()) => (),
+                            Err(err) => return Err(Box::new(IsoDataErr::Tile("Tile Tick Mut", err))),
+                        }
+                    },
+                    None => return Err(Box::new(IsoDataErr::GetMut("Arc Get Mut Tile"))),
+                }
+            },
+            None => (),
         }
         Ok(())
     }
@@ -79,18 +93,6 @@ impl EntityData<IsoData> for IsoData {
             },
             None => (),
         }
-        // if self.renderable.is_some() {
-        //     match match Arc::get_mut(match self.renderable.as_mut() {
-        //         Some(renderable) => renderable,
-        //         None => return Err(Box::new(IsoDataErr::Get("Self Renderable As Mut"))),
-        //     }) {
-        //         Some(renderable) => renderable,
-        //         None => return Err(Box::new(IsoDataErr::GetMut("Arc Renderable Get Mut"))),
-        //     }.render(window, matrix_data) {
-        //         Ok(()) => (),
-        //         Err(err) => return Err(Box::new(IsoDataErr::Renderable("Renderable Render", err))),
-        //     };
-        // }
         Ok(())
     }
 

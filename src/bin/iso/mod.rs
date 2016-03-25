@@ -45,7 +45,7 @@ pub fn main() {
 
                     let mut renderable = renderable.clone();
                     renderable.set_model(Mat4::identity()).unwrap();
-                    renderable.set_model_id(Id::new(&mut manager, IdType::Model));
+                    //renderable.set_model_id(Id::new(&mut manager, IdType::Model));
 
                     let mut transform = Transform::new();
                     transform.set_position(Vec3::from([x as f32, 0.0, y as f32])).unwrap();
