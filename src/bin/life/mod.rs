@@ -4,11 +4,17 @@ use dorp::{
 
 mod life_data;
 mod scene;
+mod cell;
+mod tile_map;
 
 pub use self::life_data::{LifeData};
 pub use self::scene::{Scene, SceneErr};
+pub use self::cell::{Cell, CellErr};
+pub use self::tile_map::{TileMap};
 
 pub static LIFE_TEXTURE: &'static [u8] = include_bytes!("../../../assets/brick.png");
+
+pub static TILE_MAP_NAME: &'static str = "TileMap";
 
 pub fn main() {
     let mut manager = init();

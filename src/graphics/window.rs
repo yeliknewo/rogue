@@ -232,42 +232,45 @@ impl<'a> Frame<'a> {
     }
 
     pub fn draw_entity(&mut self, entity: &Renderable, matrix_data: &MatrixData) -> Result<(), FrameErr> {
-        match self.frame.draw(
-            match self.vertex_buffers.get(&entity.get_vertex_id()) {
-                Some(vertices) => vertices,
-                None => return Err(FrameErr::Get("Self VertexBuffers Get")),
-            },
-            match self.index_buffers.get(&entity.get_index_id()) {
-                Some(indices) => indices,
-                None => return Err(FrameErr::Get("Self IndexBuffers Get")),
-            },
-            &self.program,
-            &uniform!(
-                tex: match self.texture_buffers.get(&entity.get_texture_id()) {
-                    Some(texture) => texture,
-                    None => return Err(FrameErr::Get("Self TextureBuffers Get")),
+        if entity.get_active() {
+            match self.frame.draw(
+                match self.vertex_buffers.get(&entity.get_vertex_id()) {
+                    Some(vertices) => vertices,
+                    None => return Err(FrameErr::Get("Self VertexBuffers Get")),
                 },
-                perspective: match matrix_data.get_perspective_matrix(&entity) {
-                    Ok(matrix) => matrix,
-                    Err(err) => return Err(FrameErr::MatrixData("MatrixData Get Perspective Matrix", err)),
+                match self.index_buffers.get(&entity.get_index_id()) {
+                    Some(indices) => indices,
+                    None => return Err(FrameErr::Get("Self IndexBuffers Get")),
                 },
-                view: match matrix_data.get_view_matrix(&entity) {
-                    Ok(matrix) => matrix,
-                    Err(err) => return Err(FrameErr::MatrixData("MatrixData Get View Matrix", err)),
-                },
-                model: match matrix_data.get_model_matrix(&entity) {
-                    Ok(matrix) => matrix,
-                    Err(err) => return Err(FrameErr::MatrixData("MatrixData Get Model Matrix", err)),
-                },
-            ),
-            match self.draw_parameters.get(&entity.get_draw_method_id()) {
-                Some(dp) => dp,
-                None => return Err(FrameErr::Get("Self Draw Parameters Get")),
+                &self.program,
+                &uniform!(
+                    tex: match self.texture_buffers.get(&entity.get_texture_id()) {
+                        Some(texture) => texture,
+                        None => return Err(FrameErr::Get("Self TextureBuffers Get")),
+                    },
+                    perspective: match matrix_data.get_perspective_matrix(&entity) {
+                        Ok(matrix) => matrix,
+                        Err(err) => return Err(FrameErr::MatrixData("MatrixData Get Perspective Matrix", err)),
+                    },
+                    view: match matrix_data.get_view_matrix(&entity) {
+                        Ok(matrix) => matrix,
+                        Err(err) => return Err(FrameErr::MatrixData("MatrixData Get View Matrix", err)),
+                    },
+                    model: match matrix_data.get_model_matrix(&entity) {
+                        Ok(matrix) => matrix,
+                        Err(err) => return Err(FrameErr::MatrixData("MatrixData Get Model Matrix", err)),
+                    },
+                ),
+                match self.draw_parameters.get(&entity.get_draw_method_id()) {
+                    Some(dp) => dp,
+                    None => return Err(FrameErr::Get("Self Draw Parameters Get")),
+                }
+            ) {
+                Ok(()) => (),
+                Err(err) => return Err(FrameErr::Draw("Self Frame Draw", err)),
             }
-        ) {
-            Ok(()) => Ok(()),
-            Err(err) => Err(FrameErr::Draw("Self Frame Draw", err)),
         }
+        Ok(())
     }
 
     pub fn end(self) -> Result<(), FrameErr> {

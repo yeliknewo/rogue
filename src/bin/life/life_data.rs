@@ -7,7 +7,7 @@ use dorp::{
     RenderableErr, TransformErr
 };
 
-use life::{Scene, SceneErr};
+use life::{Scene, SceneErr, Cell, CellErr, TileMap};
 
 pub struct LifeData {
     id: Id,
@@ -15,10 +15,19 @@ pub struct LifeData {
     transform: Option<Arc<Transform>>,
     named: Option<Arc<Named>>,
     scene: Option<Arc<Scene>>,
+    cell: Option<Arc<Cell>>,
+    tile_map: Option<Arc<TileMap>>,
 }
 
 impl EntityData<LifeData> for LifeData {
     fn tick(&self, delta_time: Arc<f64>, world: Arc<World<LifeData>>) -> Result<(), Box<Error>> {
+        match self.cell {
+            Some(ref cell) => match cell.tick(world) {
+                Ok(()) => (),
+                Err(err) => return Err(Box::new(LifeDataErr::Cell("Cell Tick", err))),
+            },
+            None => (),
+        }
         Ok(())
     }
 
@@ -37,47 +46,71 @@ impl EntityData<LifeData> for LifeData {
             },
             None => (),
         }
+        match self.tile_map.as_mut() {
+            Some(tile_map) => {
+                match Arc::get_mut(tile_map) {
+                    Some(tile_map) => tile_map.tick_mut(),
+                    None => return Err(Box::new(LifeDataErr::GetMut("Arc Get Mut Tile Map"))),
+                }
+            },
+            None => (),
+        }
+        match self.cell.as_mut() {
+            Some(cell) => {
+                match Arc::get_mut(cell) {
+                    Some(cell) => {
+                        match self.renderable.as_mut() {
+                            Some(renderable) => {
+                                match Arc::get_mut(renderable) {
+                                    Some(renderable) => {
+                                        match cell.tick_mut(renderable) {
+                                            Ok(()) => (),
+                                            Err(err) => return Err(Box::new(LifeDataErr::Cell("Cell Tick Mut", err))),
+                                        }
+                                    },
+                                    None => return Err(Box::new(LifeDataErr::GetMut("Arc Get Mut Renderable"))),
+                                }
+                            },
+                            None => return Err(Box::new(LifeDataErr::BadComponentSetup("Cell requires Renderable"))),
+                        }
+                    },
+                    None => return Err(Box::new(LifeDataErr::GetMut("Arc Get Mut Cell"))),
+                }
+            },
+            None => (),
+        }
         Ok(())
     }
 
     fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), Box<Error>> {
-        println!("11");
         match self.renderable.as_mut() {
             Some(renderable) => {
-                println!("12");
                 match Arc::get_mut(renderable) {
                     Some(renderable) => {
-                        println!("13");
                         match self.transform.as_mut() {
                             Some(transform) => {
-                                println!("14");
                                 match Arc::get_mut(transform) {
                                     Some(transform) => {
-                                        println!("15");
                                         match transform.render(renderable) {
                                             Ok(()) => (),
                                             Err(err) => return Err(Box::new(LifeDataErr::Transform("Transform Render", err))),
                                         }
-                                        println!("16");
                                     },
                                     None => return Err(Box::new(LifeDataErr::GetMut("Arc Get Mut Transform"))),
                                 }
                             },
                             None => (),
                         }
-                        println!("17");
                         match renderable.render(window, matrix_data) {
                             Ok(()) => (),
                             Err(err) => return Err(Box::new(LifeDataErr::Renderable("Renderable Render", err))),
                         }
-                        println!("18");
                     }
                     None => return Err(Box::new(LifeDataErr::GetMut("Arc Get Mut Renderable"))),
                 }
             },
             None => (),
         }
-        println!("19");
         Ok(())
     }
 
@@ -106,6 +139,8 @@ impl LifeData {
             transform: None,
             named: None,
             scene: None,
+            cell: None,
+            tile_map: None,
         }
     }
 
@@ -128,6 +163,24 @@ impl LifeData {
         self.scene = Some(Arc::new(scene));
         self
     }
+
+    pub fn with_cell(mut self, cell: Cell) -> LifeData {
+        self.cell = Some(Arc::new(cell));
+        self
+    }
+
+    pub fn with_tile_map(mut self, tile_map: TileMap) -> LifeData {
+        self.tile_map = Some(Arc::new(tile_map));
+        self
+    }
+
+    pub fn get_cell(&self) -> Option<Arc<Cell>> {
+        self.cell.clone()
+    }
+
+    pub fn get_tile_map(&self) -> Option<Arc<TileMap>> {
+        self.tile_map.clone()
+    }
 }
 
 #[derive(Debug)]
@@ -136,6 +189,7 @@ pub enum LifeDataErr {
     Renderable(&'static str, RenderableErr),
     Transform(&'static str, TransformErr),
     Scene(&'static str, SceneErr),
+    Cell(&'static str, CellErr),
     GetMut(&'static str),
 }
 
@@ -147,6 +201,7 @@ impl fmt::Display for LifeDataErr {
             LifeDataErr::Transform(_, ref err) => err.fmt(f),
             LifeDataErr::GetMut(_) => write!(f, "Get Mut was None"),
             LifeDataErr::Scene(_, ref err) => err.fmt(f),
+            LifeDataErr::Cell(_, ref err) => err.fmt(f),
         }
     }
 }
@@ -159,6 +214,7 @@ impl Error for LifeDataErr {
             LifeDataErr::Transform(_, ref err) => err.description(),
             LifeDataErr::GetMut(_) => "Get Mut was None",
             LifeDataErr::Scene(_, ref err) => err.description(),
+            LifeDataErr::Cell(_, ref err) => err.description(),
         }
     }
 }

@@ -41,6 +41,7 @@ pub struct Renderable {
     view_id: Id,
     model_id: Id,
     changes: Changes,
+    active: bool,
 }
 
 impl Renderable {
@@ -54,6 +55,7 @@ impl Renderable {
             view_id: Id::new(manager, IdType::View),
             model_id: Id::new(manager, IdType::Model),
             changes: Changes::new(),
+            active: true,
         }
     }
 
@@ -78,6 +80,7 @@ impl Renderable {
                 view_id: other.view_id,
                 model_id: other.model_id,
                 changes: changes,
+                active: other.active,
             }
         )
     }
@@ -224,6 +227,14 @@ impl Renderable {
 
     pub fn set_model_id(&mut self, id: Id) {
         self.model_id = id;
+    }
+
+    pub fn set_active(&mut self, active: bool) {
+        self.active = active;
+    }
+
+    pub fn get_active(&self) -> bool {
+        self.active
     }
 
     pub fn get_vertex_id(&self) -> Id {
