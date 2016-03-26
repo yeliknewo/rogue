@@ -29,7 +29,7 @@ pub struct Tile {
 }
 
 impl Tile {
-    pub fn new(tile_coords: Arc<TileCoords>, tile_map_name: &'static str, world: Arc<World<IsoData>>) -> Result<Tile, TileErr> {
+    pub fn new(tile_coords: &TileCoords, tile_map_name: &'static str, world: &World<IsoData>) -> Result<Tile, TileErr> {
         let mut changes = Changes::new();
         changes.dirty_tick = true;
         Ok(
@@ -45,7 +45,23 @@ impl Tile {
         )
     }
 
-    pub fn tick(&self, tile_coords: Arc<TileCoords>, world: Arc<World<IsoData>>) -> Result<(), TileErr> {
+    pub fn new_spawn(tile_coords: &TileCoords, tile_map_name: &'static str, world: &mut World<IsoData>) -> Result<Tile, TileErr> {
+        let mut changes = Changes::new();
+        changes.dirty_tick = true;
+        Ok(
+            Tile {
+                on_tile: vec!(),
+                touching: vec!(),
+                tile_map: match world.get_entity_by_name(tile_map_name) {
+                    Some(entity) => entity.get_id(),
+                    None => return Err(TileErr::Get("World Get Entity By Name Tile Map")),
+                },
+                changes: Arc::new(RwLock::new(changes)),
+            }
+        )
+    }
+
+    pub fn tick(&self, tile_coords: &TileCoords, world: &World<IsoData>) -> Result<(), TileErr> {
         if
             match self.changes.read() {
                 Ok(changes) => changes,

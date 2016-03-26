@@ -6,7 +6,6 @@ use glium::{Surface, DisplayBuild, Program, VertexBuffer, IndexBuffer, DrawParam
 use glium;
 use image::{load_from_memory, ImageError};
 use std::collections::{HashMap};
-use std::sync::{Arc};
 use std::fmt;
 use std::error::Error;
 
@@ -232,7 +231,7 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn draw_entity(&mut self, entity: Arc<Renderable>, matrix_data: Arc<MatrixData>) -> Result<(), FrameErr> {
+    pub fn draw_entity(&mut self, entity: &Renderable, matrix_data: &MatrixData) -> Result<(), FrameErr> {
         match self.frame.draw(
             match self.vertex_buffers.get(&entity.get_vertex_id()) {
                 Some(vertices) => vertices,

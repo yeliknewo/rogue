@@ -1,3 +1,5 @@
+use std::sync::{Arc};
+
 use dorp::{init, Window, WindowArgs, Game, Id, IdType, Renderable, Vertex, DrawMethod,
     DepthTestMethod, CullingMethod, Mat4, Vec3, DEG_TO_RAD, Transform, Named};
 
@@ -13,6 +15,8 @@ pub use self::tile_coords::{TileCoords};
 
 pub static STONE_TEXTURE: &'static [u8] = include_bytes!("../../../assets/brick.png");
 
+pub static TILE_MAP_NAME: &'static str = "TileMap";
+
 pub fn main() {
     let mut manager = init();
     let mut window = Window::new(WindowArgs::Borderless("Iso2".to_string())).unwrap();
@@ -22,33 +26,53 @@ pub fn main() {
     {
         let mut world = game.get_mut_world().unwrap();
         {
-            let mut renderable = Renderable::new(&mut manager);
-            renderable.set_vertices(vec!(
-                Vertex::new([0.0, 0.0, 0.0], [0.0, 0.0]),
-                Vertex::new([1.0, 0.0, 0.0], [1.0, 0.0]),
-                Vertex::new([1.0, 0.0, 1.0], [1.0, 1.0]),
-                Vertex::new([0.0, 0.0, 1.0], [0.0, 1.0]),
-            )).unwrap();
-            renderable.set_indices(vec!(
-                0, 1, 2,
-                2, 3, 0,
-            )).unwrap();
-            renderable.set_texture(STONE_TEXTURE).unwrap();
-            renderable.set_draw_method(DrawMethod::Both(DepthTestMethod::IfLess, CullingMethod::CounterClockwise)).unwrap();
-            renderable.set_perspective(Mat4::orthographic(0.0, 100.0, 90.0, 16.0 / 9.0)).unwrap();
-            renderable.set_view(Mat4::x_rotation(-45.0 * DEG_TO_RAD) * Mat4::y_rotation((180.0 + 45.0) * DEG_TO_RAD) * Mat4::translation_from_vec3(Vec3::from([0.0, -2.0, -3.0]))).unwrap();
-            renderable.set_model(Mat4::identity()).unwrap();
+            let renderable = {
+                let mut renderable = Renderable::new(&mut manager);
+                renderable.set_vertices(vec!(
+                    Vertex::new([0.0, 0.0, 0.0], [0.0, 0.0]),
+                    Vertex::new([1.0, 0.0, 0.0], [1.0, 0.0]),
+                    Vertex::new([1.0, 0.0, 1.0], [1.0, 1.0]),
+                    Vertex::new([0.0, 0.0, 1.0], [0.0, 1.0]),
+                )).unwrap();
+                renderable.set_indices(vec!(
+                    0, 1, 2,
+                    2, 3, 0,
+                )).unwrap();
+                renderable.set_texture(STONE_TEXTURE).unwrap();
+                renderable.set_draw_method(DrawMethod::Both(DepthTestMethod::IfLess, CullingMethod::CounterClockwise)).unwrap();
+                renderable.set_perspective(Mat4::orthographic(0.0, 100.0, 90.0, 16.0 / 9.0)).unwrap();
+                renderable.set_view(Mat4::x_rotation(-45.0 * DEG_TO_RAD) * Mat4::y_rotation((180.0 + 45.0) * DEG_TO_RAD) * Mat4::translation_from_vec3(Vec3::from([0.0, -2.0, -3.0]))).unwrap();
+                renderable.set_model(Mat4::identity()).unwrap();
+                Arc::new(renderable)
+            };
+
+            {
+                let id = Id::new(&mut manager, IdType::Entity);
+
+                let tile_map = TileMap::new();
+
+                world.add_entity(
+                    IsoData::new(id)
+                    .with_tile_map(
+                        tile_map
+                    )
+                ).unwrap();
+            }
 
             for y in -5..6 {
                 for x in -5..6 {
                     let id = Id::new(&mut manager, IdType::Entity);
 
-                    let mut renderable = renderable.clone();
+                    let mut renderable = Renderable::new_from(renderable.clone()).unwrap();
+                    renderable.set_model_id(Id::new(&mut manager, IdType::Model));
                     renderable.set_model(Mat4::identity()).unwrap();
-                    //renderable.set_model_id(Id::new(&mut manager, IdType::Model));
 
                     let mut transform = Transform::new();
                     transform.set_position(Vec3::from([x as f32, 0.0, y as f32])).unwrap();
+
+                    let tile_coords = TileCoords::new(x, y);
+
+                    let tile = Tile::new_spawn(&tile_coords, TILE_MAP_NAME, world).unwrap();
 
                     world.add_entity(
                         IsoData::new(id)
@@ -57,6 +81,12 @@ pub fn main() {
                         )
                         .with_transform(
                             transform
+                        )
+                        .with_tile(
+                            tile
+                        )
+                        .with_tile_coords(
+                            tile_coords
                         )
                     ).unwrap();
                 }

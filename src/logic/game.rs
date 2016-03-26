@@ -226,7 +226,7 @@ impl<T: EntityData<T>> Game<T> {
         }.iter_mut() {
             match entry.1.get_renderable(){
                 Some(data) => {
-                    match frame.draw_entity(data, self.matrix_data.clone()) {
+                    match frame.draw_entity(&data, self.matrix_data.as_ref()) {
                         Ok(()) => (),
                         Err(err) => {
                             match frame.end() {

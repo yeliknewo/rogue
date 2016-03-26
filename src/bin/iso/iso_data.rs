@@ -23,9 +23,9 @@ impl EntityData<IsoData> for IsoData {
     fn tick(&self, delta_time: Arc<f64>, world: Arc<World<IsoData>>) -> Result<(), Box<Error>> {
         match self.tile.clone() {
             Some(tile) => {
-                match self.tile_coords.clone() {
-                    Some(tile_coords) => {
-                        match tile.tick(tile_coords, world) {
+                match self.tile_coords.as_ref() {
+                    Some(ref tile_coords) => {
+                        match tile.tick(&tile_coords, &world) {
                             Ok(()) => (),
                             Err(err) => return Err(Box::new(IsoDataErr::Tile("Tile Tick", err))),
                         }
@@ -156,6 +156,11 @@ impl IsoData {
         self
     }
 
+    pub fn with_tile_coords_arc(mut self, tile_coords: Arc<TileCoords>) -> IsoData {
+        self.tile_coords = Some(tile_coords);
+        self
+    }
+
     pub fn get_tile(&self) -> Option<Arc<Tile>> {
         self.tile.clone()
     }
@@ -176,18 +181,16 @@ pub enum IsoDataErr {
     Transform(&'static str, TransformErr),
     Tile(&'static str, TileErr),
     GetMut(&'static str),
-    Get(&'static str),
 }
 
 impl fmt::Display for IsoDataErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            IsoDataErr::Renderable(_, ref err) => err.fmt(f),
-            IsoDataErr::GetMut(_) => write!(f, "Get Mut was None"),
-            IsoDataErr::Get(_) => write!(f, "Get was None"),
             IsoDataErr::BadComponentSetup(_) => write!(f, "This Component Requires Certain Other Components"),
+            IsoDataErr::Renderable(_, ref err) => err.fmt(f),
             IsoDataErr::Transform(_, ref err) => err.fmt(f),
             IsoDataErr::Tile(_, ref err) => err.fmt(f),
+            IsoDataErr::GetMut(_) => write!(f, "Get Mut was None"),
         }
     }
 }
@@ -197,10 +200,9 @@ impl Error for IsoDataErr {
         match *self {
             IsoDataErr::BadComponentSetup(_) => "Component has unmet component requirements",
             IsoDataErr::Renderable(_, ref err) => err.description(),
-            IsoDataErr::GetMut(_) => "Get Mut was None",
-            IsoDataErr::Get(_) => "Get was None",
             IsoDataErr::Transform(_, ref err) => err.description(),
             IsoDataErr::Tile(_, ref err) => err.description(),
+            IsoDataErr::GetMut(_) => "Get Mut was None",
         }
     }
 }

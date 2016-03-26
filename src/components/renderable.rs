@@ -32,7 +32,6 @@ impl Changes {
     }
 }
 
-#[derive(Clone)]
 pub struct Renderable {
     texture_id: Id,
     vertex_id: Id,
@@ -47,15 +46,43 @@ pub struct Renderable {
 impl Renderable {
     pub fn new(manager: &mut IdManager) -> Renderable {
         Renderable {
-            texture_id: Id::new(manager, IdType::Texture),
             vertex_id: Id::new(manager, IdType::Vertex),
             index_id: Id::new(manager, IdType::Index),
+            texture_id: Id::new(manager, IdType::Texture),
             draw_method_id: Id::new(manager, IdType::DrawMethod),
             perspective_id: Id::new(manager, IdType::Perspective),
             view_id: Id::new(manager, IdType::View),
             model_id: Id::new(manager, IdType::Model),
             changes: Arc::new(RwLock::new(Changes::new())),
         }
+    }
+
+    pub fn new_from(other: Arc<Renderable>) -> Result<Renderable, RenderableErr> {
+        let other_changes = match other.changes.read() {
+            Ok(changes) => changes,
+            Err(_) => return Err(RenderableErr::Poison("Other Changes Read")),
+        };
+        let mut changes = Changes::new();
+        changes.vertices = other_changes.vertices.clone();
+        changes.indices = other_changes.indices.clone();
+        changes.texture = other_changes.texture.clone();
+        changes.draw_method = other_changes.draw_method.clone();
+        changes.perspective = other_changes.perspective.clone();
+        changes.view = other_changes.view.clone();
+        changes.model = other_changes.model.clone();
+        changes.dirty_render = other_changes.dirty_render;
+        Ok(
+            Renderable {
+                vertex_id: other.vertex_id,
+                index_id: other.index_id,
+                texture_id: other.texture_id,
+                draw_method_id: other.draw_method_id,
+                perspective_id: other.perspective_id,
+                view_id: other.view_id,
+                model_id: other.model_id,
+                changes: Arc::new(RwLock::new(changes)),
+            }
+        )
     }
 
     pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
