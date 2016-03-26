@@ -1,9 +1,9 @@
 extern crate dorp;
 
 //mod iso;
-mod iso;
+mod life;
 
 fn main() {
     //iso::main();
-    iso::main();
+    life::main();
 }

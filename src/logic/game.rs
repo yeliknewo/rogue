@@ -111,10 +111,12 @@ impl<T: EntityData<T>> Game<T> {
         let mut tick_number: u64 = 0;
 
         loop {
+            println!("1");
             let now = precise_time_s();
             delta_time += now - last_time;
             last_time = now;
             while delta_time > 0.0 {
+                println!("2");
                 for event in window.poll_events(){
                     match event {
                         WindowEvent::Resized(width, height) => match self.update_resolution((width, height)) {
@@ -171,18 +173,22 @@ impl<T: EntityData<T>> Game<T> {
                         _ => (),
                     }
                 }
+                println!("3");
                 match self.tick(tps_s, manager) {
                     Ok(()) => (),
                     Err(err) => return Err(GameErr::Game("Self Tick", Box::new(err))),
                 };
+                println!("4");
                 delta_time -= tps_s;
                 ticks += 1;
                 tick_number += 1;
             }
+            println!("5");
             match self.render(window) {
                 Ok(()) => (),
                 Err(err) => return Err(GameErr::Game("Self Render", Box::new(err))),
             }
+            println!("6");
             frames += 1;
             if now > i + 1.0 {
                 i += 1.0;
@@ -194,10 +200,12 @@ impl<T: EntityData<T>> Game<T> {
     }
 
     fn render(&mut self, window: &mut Window) -> Result<(), GameErr> {
+        println!("7");
         let mut world = match Arc::get_mut(&mut self.world) {
             Some(world) => world,
             None => return Err(GameErr::GetMut("Arc Get Mut Self World")),
         };
+        println!("8");
         for (_, entity) in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
             Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
@@ -213,6 +221,7 @@ impl<T: EntityData<T>> Game<T> {
                 Err(err) => return Err(GameErr::Entity("Entity Render", err)),
             }
         }
+        println!("9");
         let mut frame = window.frame();
         for entry in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
@@ -240,6 +249,7 @@ impl<T: EntityData<T>> Game<T> {
                 None => (),
             }
         }
+        println!("10");
         match frame.end() {
             Ok(()) => Ok(()),
             Err(err) => Err(GameErr::Frame("Frame End", err)),
@@ -266,33 +276,45 @@ impl<T: EntityData<T>> Game<T> {
         }
         match Arc::get_mut(&mut self.world)  {
             Some(world) => {
+                let mut keys = vec!();
                 match world.get_mut_entity_data() {
                     Ok(entity_data) => {
-                        let mut keys = vec!();
                         for key in entity_data.keys() {
                             keys.push(key.clone());
                         }
-                        for key in keys {
-                            let mut entity = match entity_data.remove(&key) {
-                                Some(entity) => entity,
-                                None => return Err(GameErr::BadIndex("Entity Data Remove")),
-                            };
-                            match match Arc::get_mut(&mut entity) {
-                                Some(entity) => entity,
-                                None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
-                            }.tick_mut(manager) {
-                                Ok(()) => (),
-                                Err(err) => return Err(GameErr::Entity("Entity Tick Mut", err)),
-                            }
+                    },
+                    Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
+                }
+                for key in keys {
+                    let mut entity: Arc<T> = {
+                        match world.get_mut_entity_data() {
+                            Ok(entity_data) => {
+                                match entity_data.remove(&key) {
+                                    Some(entity) => entity,
+                                    None => return Err(GameErr::BadIndex("Entity Data Remove")),
+                                }
+                            },
+                            Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
+                        }
+                    };
+                    match match Arc::get_mut(&mut entity) {
+                        Some(entity) => entity,
+                        None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
+                    }.tick_mut(manager, world) {
+                        Ok(()) => (),
+                        Err(err) => return Err(GameErr::Entity("Entity Tick Mut", err)),
+                    }
+                    match world.get_mut_entity_data() {
+                        Ok(entity_data) => {
                             entity_data.insert(key, entity);
                         }
-                        Ok(())
-                    },
-                    Err(err) => Err(GameErr::World("World Get Mut Entity Data", err)),
+                        Err(err) => return Err(GameErr::World("World Get Mut Entity Data", err)),
+                    }
                 }
             },
-            None => Err(GameErr::GetMut("Arc Get Mut Self World")),
+            None => return Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
+        Ok(())
     }
 }
 

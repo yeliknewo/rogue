@@ -107,6 +107,13 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
+    pub fn remove_entity(&mut self, id: Id) -> Result<Option<Arc<T>>, WorldErr> {
+        match Arc::get_mut(&mut self.entity_data) {
+            Some(entity_data) => Ok(entity_data.remove(&id)),
+            None => Err(WorldErr::GetMut("Arc Get Mut Self EntityData")),
+        }
+    }
+
     pub fn get_entity_by_id(&self, id: Id) -> Option<Arc<T>> {
         match self.entity_data.get(&id) {
             Some(entity_data) => {

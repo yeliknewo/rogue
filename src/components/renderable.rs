@@ -1,5 +1,5 @@
 use std::fmt;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
@@ -40,7 +40,7 @@ pub struct Renderable {
     perspective_id: Id,
     view_id: Id,
     model_id: Id,
-    changes: Arc<RwLock<Changes>>,
+    changes: Changes,
 }
 
 impl Renderable {
@@ -53,15 +53,12 @@ impl Renderable {
             perspective_id: Id::new(manager, IdType::Perspective),
             view_id: Id::new(manager, IdType::View),
             model_id: Id::new(manager, IdType::Model),
-            changes: Arc::new(RwLock::new(Changes::new())),
+            changes: Changes::new(),
         }
     }
 
     pub fn new_from(other: Arc<Renderable>) -> Result<Renderable, RenderableErr> {
-        let other_changes = match other.changes.read() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Other Changes Read")),
-        };
+        let other_changes = &other.changes;
         let mut changes = Changes::new();
         changes.vertices = other_changes.vertices.clone();
         changes.indices = other_changes.indices.clone();
@@ -80,22 +77,14 @@ impl Renderable {
                 perspective_id: other.perspective_id,
                 view_id: other.view_id,
                 model_id: other.model_id,
-                changes: Arc::new(RwLock::new(changes)),
+                changes: changes,
             }
         )
     }
 
     pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
-        if match self.changes.read(){
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Read Dirty")),
-        }.dirty_render {
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read Vertices")),
-                }
-            }.vertices.clone() {
+        if self.changes.dirty_render {
+            match self.changes.vertices.clone() {
                 Some(vertices) => {
                     match window.set_vertices(self.vertex_id, vertices) {
                         Ok(()) => (),
@@ -104,12 +93,7 @@ impl Renderable {
                 },
                 None => (),
             }
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read Indices")),
-                }
-            }.indices.clone() {
+            match self.changes.indices.clone() {
                 Some(indices) => {
                     match window.set_indices(self.index_id, indices) {
                         Ok(()) => (),
@@ -118,12 +102,7 @@ impl Renderable {
                 },
                 None => (),
             }
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read Texture")),
-                }
-            }.texture {
+            match self.changes.texture {
                 Some(texture) => {
                     match window.set_texture(self.texture_id, texture) {
                         Ok(()) => (),
@@ -132,23 +111,13 @@ impl Renderable {
                 },
                 None => (),
             }
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read DrawMethod")),
-                }
-            }.draw_method.clone() {
+            match self.changes.draw_method.clone() {
                 Some(draw_method) => {
                     window.set_draw_method(self.draw_method_id, draw_method);
                 },
                 None => (),
             }
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read Perspective")),
-                }
-            }.perspective.clone() {
+            match self.changes.perspective.clone() {
                 Some(perspective) => {
                     match matrix_data.set_perspective_matrix(self.perspective_id, perspective.0, perspective.1) {
                         Ok(()) => (),
@@ -157,12 +126,7 @@ impl Renderable {
                 },
                 None => (),
             }
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read View")),
-                }
-            }.view.clone() {
+            match self.changes.view.clone() {
                 Some(view) => {
                     match matrix_data.set_view_matrix(self.view_id, view.0, view.1) {
                         Ok(()) => (),
@@ -171,12 +135,7 @@ impl Renderable {
                 },
                 None => (),
             }
-            match {
-                match self.changes.read() {
-                    Ok(changes) => changes,
-                    Err(_) => return Err(RenderableErr::Poison("Changes Read Model")),
-                }
-            }.model.clone() {
+            match self.changes.model.clone() {
                 Some(model) => {
                     match matrix_data.set_model_matrix(self.model_id, model.0, model.1) {
                         Ok(()) => (),
@@ -185,123 +144,57 @@ impl Renderable {
                 },
                 None => (),
             }
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
-            }.vertices = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
-            }.indices = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
-            }.texture = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
-            }.draw_method = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write Perspective"))
-            }.perspective = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write View"))
-            }.view = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write Model"))
-            }.model = None;
-            match self.changes.write() {
-                Ok(changes) => changes,
-                Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-            }.dirty_render = false;
+            self.changes.vertices = None;
+            self.changes.indices = None;
+            self.changes.texture = None;
+            self.changes.draw_method = None;
+            self.changes.perspective = None;
+            self.changes.view = None;
+            self.changes.model = None;
+            self.changes.dirty_render = false;
         }
         Ok(())
     }
 
     pub fn set_vertices(&mut self, vertices: Vec<Vertex>) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Vertices")),
-        }.vertices = Some(vertices);
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.vertices = Some(vertices);
+        self.changes.dirty_render = true;
         Ok(())
     }
 
     pub fn set_indices(&mut self, indices: Vec<Index>) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Indices")),
-        }.indices = Some(indices);
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.indices = Some(indices);
+        self.changes.dirty_render = true;
         Ok(())
     }
 
     pub fn set_texture(&mut self, texture: &'static [u8]) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Texture")),
-        }.texture = Some(texture);
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.texture = Some(texture);
+        self.changes.dirty_render = true;
         Ok(())
     }
 
     pub fn set_draw_method(&mut self, draw_method: DrawMethod) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write DrawMethod")),
-        }.draw_method = Some(draw_method);
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.draw_method = Some(draw_method);
+        self.changes.dirty_render = true;
         Ok(())
     }
 
     pub fn set_perspective(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Perspective")),
-        }.perspective = Some((matrix, matrix.to_inverse()));
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.perspective = Some((matrix, matrix.to_inverse()));
+        self.changes.dirty_render = true;
         Ok(())
     }
 
     pub fn set_view(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write View")),
-        }.view = Some((matrix, matrix.to_inverse()));
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.view = Some((matrix, matrix.to_inverse()));
+        self.changes.dirty_render = true;
         Ok(())
     }
 
     pub fn set_model(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Model")),
-        }.model = Some((matrix, matrix.to_inverse()));
-        match self.changes.write() {
-            Ok(changes) => changes,
-            Err(_) => return Err(RenderableErr::Poison("Changes Write Dirty")),
-        }.dirty_render = true;
+        self.changes.model = Some((matrix, matrix.to_inverse()));
+        self.changes.dirty_render = true;
         Ok(())
     }
 
