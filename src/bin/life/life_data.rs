@@ -90,12 +90,7 @@ impl EntityData<LifeData> for LifeData {
                         match self.transform.as_mut() {
                             Some(transform) => {
                                 match Arc::get_mut(transform) {
-                                    Some(transform) => {
-                                        match transform.render(renderable) {
-                                            Ok(()) => (),
-                                            Err(err) => return Err(Box::new(LifeDataErr::Transform("Transform Render", err))),
-                                        }
-                                    },
+                                    Some(transform) => transform.render(renderable),
                                     None => return Err(Box::new(LifeDataErr::GetMut("Arc Get Mut Transform"))),
                                 }
                             },

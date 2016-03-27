@@ -3,7 +3,9 @@ use std::sync::{Arc};
 use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
-use graphics::{Window, WindowErr, Vertex, Index, DrawMethod, MatrixData, MatrixDataErr};
+use graphics::{
+    Window, WindowErr, Vertex, Index, DrawMethod, MatrixData, MatrixDataErr, ProgramPreset
+};
 use math::{Mat4};
 
 struct Changes {
@@ -11,6 +13,7 @@ struct Changes {
     indices: Option<Vec<Index>>,
     texture: Option<&'static [u8]>,
     draw_method: Option<DrawMethod>,
+    program: Option<ProgramPreset>,
     perspective: Option<(Mat4, Mat4)>,
     view: Option<(Mat4, Mat4)>,
     model: Option<(Mat4, Mat4)>,
@@ -24,10 +27,25 @@ impl Changes {
             indices: None,
             texture: None,
             draw_method: None,
+            program: None,
             perspective: None,
             view: None,
             model: None,
             dirty_render: false,
+        }
+    }
+
+    pub fn new_from(other: &Changes) -> Changes {
+        Changes {
+            vertices: other.vertices.clone(),
+            indices: other.indices.clone(),
+            texture: other.texture,
+            draw_method: other.draw_method.clone(),
+            program: other.program,
+            perspective: other.perspective,
+            view: other.view,
+            model: other.model,
+            dirty_render: other.dirty_render,
         }
     }
 }
@@ -37,6 +55,7 @@ pub struct Renderable {
     vertex_id: Id,
     index_id: Id,
     draw_method_id: Id,
+    program_id: Id,
     perspective_id: Id,
     view_id: Id,
     model_id: Id,
@@ -51,6 +70,7 @@ impl Renderable {
             index_id: Id::new(manager, IdType::Index),
             texture_id: Id::new(manager, IdType::Texture),
             draw_method_id: Id::new(manager, IdType::DrawMethod),
+            program_id: Id::new(manager, IdType::Program),
             perspective_id: Id::new(manager, IdType::Perspective),
             view_id: Id::new(manager, IdType::View),
             model_id: Id::new(manager, IdType::Model),
@@ -59,30 +79,19 @@ impl Renderable {
         }
     }
 
-    pub fn new_from(other: Arc<Renderable>) -> Result<Renderable, RenderableErr> {
-        let other_changes = &other.changes;
-        let mut changes = Changes::new();
-        changes.vertices = other_changes.vertices.clone();
-        changes.indices = other_changes.indices.clone();
-        changes.texture = other_changes.texture.clone();
-        changes.draw_method = other_changes.draw_method.clone();
-        changes.perspective = other_changes.perspective.clone();
-        changes.view = other_changes.view.clone();
-        changes.model = other_changes.model.clone();
-        changes.dirty_render = other_changes.dirty_render;
-        Ok(
-            Renderable {
-                vertex_id: other.vertex_id,
-                index_id: other.index_id,
-                texture_id: other.texture_id,
-                draw_method_id: other.draw_method_id,
-                perspective_id: other.perspective_id,
-                view_id: other.view_id,
-                model_id: other.model_id,
-                changes: changes,
-                active: other.active,
-            }
-        )
+    pub fn new_from(other: Arc<Renderable>) -> Renderable {
+        Renderable {
+            vertex_id: other.vertex_id,
+            index_id: other.index_id,
+            texture_id: other.texture_id,
+            draw_method_id: other.draw_method_id,
+            program_id: other.program_id,
+            perspective_id: other.perspective_id,
+            view_id: other.view_id,
+            model_id: other.model_id,
+            changes: Changes::new_from(&other.changes),
+            active: other.active,
+        }
     }
 
     pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
@@ -117,6 +126,15 @@ impl Renderable {
             match self.changes.draw_method.clone() {
                 Some(draw_method) => {
                     window.set_draw_method(self.draw_method_id, draw_method);
+                },
+                None => (),
+            }
+            match self.changes.program {
+                Some(program) => {
+                    match window.get_program_preset(program) {
+                        Ok(id) => self.set_program_id(id),
+                        Err(err) => return Err(RenderableErr::Window("Window Get Program Preset Program", err)),
+                    }
                 },
                 None => (),
             }
@@ -159,46 +177,44 @@ impl Renderable {
         Ok(())
     }
 
-    pub fn set_vertices(&mut self, vertices: Vec<Vertex>) -> Result<(), RenderableErr> {
+    pub fn set_vertices(&mut self, vertices: Vec<Vertex>) {
         self.changes.vertices = Some(vertices);
         self.changes.dirty_render = true;
-        Ok(())
     }
 
-    pub fn set_indices(&mut self, indices: Vec<Index>) -> Result<(), RenderableErr> {
+    pub fn set_indices(&mut self, indices: Vec<Index>) {
         self.changes.indices = Some(indices);
         self.changes.dirty_render = true;
-        Ok(())
     }
 
-    pub fn set_texture(&mut self, texture: &'static [u8]) -> Result<(), RenderableErr> {
+    pub fn set_texture(&mut self, texture: &'static [u8]) {
         self.changes.texture = Some(texture);
         self.changes.dirty_render = true;
-        Ok(())
     }
 
-    pub fn set_draw_method(&mut self, draw_method: DrawMethod) -> Result<(), RenderableErr> {
+    pub fn set_draw_method(&mut self, draw_method: DrawMethod) {
         self.changes.draw_method = Some(draw_method);
         self.changes.dirty_render = true;
-        Ok(())
     }
 
-    pub fn set_perspective(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
+    pub fn set_program(&mut self, program_preset: ProgramPreset) {
+        self.changes.program = Some(program_preset);
+        self.changes.dirty_render = true;
+    }
+
+    pub fn set_perspective(&mut self, matrix: Mat4) {
         self.changes.perspective = Some((matrix, matrix.to_inverse()));
         self.changes.dirty_render = true;
-        Ok(())
     }
 
-    pub fn set_view(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
+    pub fn set_view(&mut self, matrix: Mat4) {
         self.changes.view = Some((matrix, matrix.to_inverse()));
         self.changes.dirty_render = true;
-        Ok(())
     }
 
-    pub fn set_model(&mut self, matrix: Mat4) -> Result<(), RenderableErr> {
+    pub fn set_model(&mut self, matrix: Mat4) {
         self.changes.model = Some((matrix, matrix.to_inverse()));
         self.changes.dirty_render = true;
-        Ok(())
     }
 
     pub fn set_vertex_id(&mut self, id: Id) {
@@ -215,6 +231,10 @@ impl Renderable {
 
     pub fn set_draw_method_id(&mut self, id: Id) {
         self.draw_method_id = id;
+    }
+
+    pub fn set_program_id(&mut self, id: Id) {
+        self.program_id = id;
     }
 
     pub fn set_perspective_id(&mut self, id: Id) {
@@ -251,6 +271,10 @@ impl Renderable {
 
     pub fn get_draw_method_id(&self) -> Id {
         self.draw_method_id
+    }
+
+    pub fn get_program_id(&self) -> Id {
+        self.program_id
     }
 
     pub fn get_perspective_id(&self) -> Id {

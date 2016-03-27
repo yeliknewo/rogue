@@ -10,13 +10,14 @@ use std::fmt;
 use std::error::Error;
 
 use math::{Vec2};
-use logic::{Id};
+use logic::{Id, IdType, IdManager};
 use graphics::{Vertex, Index, MatrixData, MatrixDataErr, DrawMethod, method_to_parameters};
 use components::{Renderable};
 
 pub struct Window {
     facade: GlutinFacade,
-    program: Program,
+    program_presets: HashMap<ProgramPreset, Id>,
+    programs: HashMap<Id, Program>,
     texture_buffers: HashMap<Id, Texture2d>,
     vertex_buffers: HashMap<Id, VertexBuffer<Vertex>>,
     index_buffers: HashMap<Id, IndexBuffer<Index>>,
@@ -25,38 +26,7 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(args: WindowArgs) -> Result<Window, WindowErr> {
-        let vertex_shader_src = r#"
-            #version 140
-
-            in vec3 position;
-            in vec2 tex_coord;
-            uniform mat4 perspective;
-            uniform mat4 view;
-            uniform mat4 model;
-
-            out vec2 v_tex_coord;
-
-            void main() {
-                v_tex_coord = tex_coord;
-                gl_Position = perspective * view * model * vec4(position, 1.0);
-            }
-        "#;
-
-        let fragment_shader_src = r#"
-            #version 140
-
-            in vec2 v_tex_coord;
-
-            out vec4 color;
-
-            uniform sampler2D tex;
-
-            void main() {
-                color = texture(tex, v_tex_coord);
-            }
-        "#;
-
+    pub fn new(args: WindowArgs, manager: &mut IdManager) -> Result<Window, WindowErr> {
         let resolution: (u32, u32) = get_primary_monitor().get_dimensions();
 
         let facade = match args {
@@ -95,20 +65,60 @@ impl Window {
                 facade
             },
         };
-        Ok(
             Window {
-                program: match Program::from_source(&facade, vertex_shader_src, fragment_shader_src, None) {
-                    Ok(program) => program,
-                    Err(err) => return Err(WindowErr::ProgramCreation("Program From Source", err)),
-                },
                 facade: facade,
+                program_presets: HashMap::new(),
+                programs: HashMap::new(),
                 texture_buffers: HashMap::new(),
                 vertex_buffers: HashMap::new(),
                 index_buffers: HashMap::new(),
                 draw_parameters: HashMap::new(),
                 resolution: resolution,
+            }.make_presets(manager)
+
+    }
+
+    fn make_presets(mut self, manager: &mut IdManager) -> Result<Window, WindowErr> {
+        let vertex_shader_src = r#"
+            #version 140
+
+            in vec3 position;
+            in vec2 tex_coord;
+            uniform mat4 perspective;
+            uniform mat4 view;
+            uniform mat4 model;
+
+            out vec2 v_tex_coord;
+
+            void main() {
+                v_tex_coord = tex_coord;
+                gl_Position = perspective * view * model * vec4(position, 1.0);
             }
-        )
+        "#;
+
+        let fragment_shader_src = r#"
+            #version 140
+
+            in vec2 v_tex_coord;
+
+            out vec4 color;
+
+            uniform sampler2D tex;
+
+            void main() {
+                color = texture(tex, v_tex_coord);
+            }
+        "#;
+
+        {
+            let program = match Program::from_source(&self.facade, vertex_shader_src, fragment_shader_src, None) {
+                Ok(program) => program,
+                Err(err) => return Err(WindowErr::ProgramCreation("Program From Source", err)),
+            };
+            self.set_program_preset(ProgramPreset::Texture2d, program, manager);
+        }
+
+        Ok(self)
     }
 
     pub fn get_resolution_vec2(&self) -> Vec2 {
@@ -116,7 +126,7 @@ impl Window {
     }
 
     pub fn frame(&mut self) -> Frame {
-        Frame::new(&mut self.facade, &mut self.program, &mut self.texture_buffers, &mut self.vertex_buffers, &mut self.index_buffers, &mut self.draw_parameters)
+        Frame::new(&mut self.facade, &mut self.programs, &mut self.texture_buffers, &mut self.vertex_buffers, &mut self.index_buffers, &mut self.draw_parameters)
     }
 
     pub fn poll_events(&self) -> PollEventsIter {
@@ -154,6 +164,29 @@ impl Window {
     pub fn set_draw_method(&mut self, id: Id, draw_method: DrawMethod) {
         self.draw_parameters.insert(id, method_to_parameters(draw_method));
     }
+
+    pub fn set_program(&mut self, id: Id, program: Program) {
+        self.programs.insert(id, program);
+    }
+
+    pub fn set_program_preset(&mut self, preset: ProgramPreset, program: Program, manager: &mut IdManager) {
+        let id = Id::new(manager, IdType::Program);
+        self.program_presets.insert(preset, id);
+        self.programs.insert(id, program);
+    }
+
+    pub fn get_program_preset(&self, preset: ProgramPreset) -> Result<Id, WindowErr> {
+        match self.program_presets.get(&preset) {
+            Some(id) => Ok(id.clone()),
+            None => return Err(WindowErr::Get("Program Presets Get Preset")),
+        }
+    }
+}
+
+#[derive(Debug, Eq, Copy, Clone, PartialEq, Hash)]
+pub enum ProgramPreset {
+    Texture2d,
+    Color,
 }
 
 #[derive(Debug)]
@@ -202,7 +235,7 @@ pub enum WindowArgs {
 }
 
 pub struct Frame<'a> {
-    program: &'a mut Program,
+    programs: &'a mut HashMap<Id, Program>,
     texture_buffers: &'a mut HashMap<Id, Texture2d>,
     vertex_buffers: &'a mut HashMap<Id, VertexBuffer<Vertex>>,
     index_buffers: &'a mut HashMap<Id, IndexBuffer<Index>>,
@@ -213,7 +246,7 @@ pub struct Frame<'a> {
 impl<'a> Frame<'a> {
     fn new(
         facade: &'a mut GlutinFacade,
-        program: &'a mut Program,
+        programs: &'a mut HashMap<Id, Program>,
         texture_buffers: &'a mut HashMap<Id, Texture2d>,
         vertex_buffers: &'a mut HashMap<Id, VertexBuffer<Vertex>>,
         index_buffers: &'a mut HashMap<Id, IndexBuffer<Index>>,
@@ -223,7 +256,7 @@ impl<'a> Frame<'a> {
         frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
         Frame {
             frame: frame,
-            program: program,
+            programs: programs,
             texture_buffers: texture_buffers,
             vertex_buffers: vertex_buffers,
             index_buffers: index_buffers,
@@ -242,7 +275,10 @@ impl<'a> Frame<'a> {
                     Some(indices) => indices,
                     None => return Err(FrameErr::Get("Self IndexBuffers Get")),
                 },
-                &self.program,
+                match self.programs.get(&entity.get_program_id()) {
+                    Some(program) => program,
+                    None => return Err(FrameErr::Get("Self Programs Get")),
+                },
                 &uniform!(
                     tex: match self.texture_buffers.get(&entity.get_texture_id()) {
                         Some(texture) => texture,

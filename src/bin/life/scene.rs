@@ -26,64 +26,34 @@ impl Scene {
 
             let renderable = {
                 let mut renderable = Renderable::new(manager);
-                match renderable.set_vertices(vec!(
+                renderable.set_vertices(vec!(
                     Vertex::new([0.0, 0.0, 0.0], [0.0, 0.0]),
                     Vertex::new([0.0, 1.0, 0.0], [0.0, 1.0]),
                     Vertex::new([1.0, 1.0, 0.0], [1.0, 1.0]),
                     Vertex::new([1.0, 0.0, 0.0], [1.0, 0.0])
-                )) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set Vertices", err)),
-                }
-                match renderable.set_indices(vec!(
+                ));
+                renderable.set_indices(vec!(
                     0, 1, 2,
                     2, 3, 0
-                )) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set Indices", err)),
-                }
-                match renderable.set_texture(LIFE_TEXTURE) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set Texture Life Texture", err)),
-                }
-                match renderable.set_draw_method(DrawMethod::Neither) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set Draw Method Neither", err)),
-                }
-                match renderable.set_perspective(Mat4::orthographic(0.1, 100.0, 90.0, world.get_aspect_ratio())) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set Perspective Orthographic", err)),
-                }
-                match renderable.set_view(Mat4::identity()) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set View Identity", err)),
-                }
-                match renderable.set_model(Mat4::identity()) {
-                    Ok(()) => (),
-                    Err(err) => return Err(SceneErr::Renderable("Renderable Set Model Identity", err)),
-                }
+                ));
+                renderable.set_texture(LIFE_TEXTURE);
+                renderable.set_draw_method(DrawMethod::Neither);
+                renderable.set_perspective(Mat4::orthographic(0.1, 100.0, 90.0, world.get_aspect_ratio()));
+                renderable.set_view(Mat4::identity());
+                renderable.set_model(Mat4::identity());
                 Arc::new(renderable)
             };
             for y in -5..6{
                 for x in -5..6 {
                     let id = Id::new(manager, IdType::Entity);
 
-                    let mut renderable = match Renderable::new_from(renderable.clone()) {
-                        Ok(renderable) => renderable,
-                        Err(err) => return Err(SceneErr::Renderable("Renderable New From Renderable", err)),
-                    };
+                    let mut renderable = Renderable::new_from(renderable.clone());
                     renderable.set_model_id(Id::new(manager, IdType::Model));
-                    match renderable.set_model(Mat4::identity()) {
-                        Ok(()) => (),
-                        Err(err) => return Err(SceneErr::Renderable("Renderable Set Model Mat4 Identity", err)),
-                    }
+                    renderable.set_model(Mat4::identity());
 
                     let mut transform = Transform::new();
-                    match transform.set_position(Vec3::from([x as f32, y as f32, -10.0])) {
-                        Ok(()) => (),
-                        Err(err) => return Err(SceneErr::Transform("Transform Set Position", err)),
-                    }
-                    
+                    transform.set_position(Vec3::from([x as f32, y as f32, -10.0]));
+
                     let cell = Cell::new(x, y, id, y % 2 < x % 2, &mut tile_map);
 
                     match world.add_entity(

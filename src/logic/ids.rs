@@ -29,6 +29,7 @@ pub enum IdType {
     Index,
     Texture,
     DrawMethod,
+    Program,
     Perspective,
     View,
     Model,

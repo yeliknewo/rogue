@@ -18,10 +18,8 @@ pub static TILE_MAP_NAME: &'static str = "TileMap";
 
 pub fn main() {
     let mut manager = init();
-    let mut window = Window::new(WindowArgs::Windowed(640, 480, "Life".to_string())).unwrap();
-    let resolution = window.get_resolution_vec2();
-    let thread_count = 8;
-    let mut game = Game::<LifeData>::new(thread_count, resolution);
+    let mut window = Window::new(WindowArgs::Windowed(640, 480, "Life".to_string()), &mut manager).unwrap();
+    let mut game = Game::<LifeData>::new(8, window.get_resolution_vec2()); // threadcount, resolution
     {
         let mut world = game.get_mut_world().unwrap();
         let id = Id::new(&mut manager, IdType::Entity);
