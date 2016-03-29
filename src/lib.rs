@@ -8,6 +8,7 @@ mod math;
 mod input;
 mod logic;
 mod graphics;
+mod graphics2;
 mod components;
 mod err;
 
