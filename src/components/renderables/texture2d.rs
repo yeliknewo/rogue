@@ -3,9 +3,6 @@ use std::sync::{Arc};
 use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
-use graphics::{
-    Window, WindowErr, Vertex, Index, DrawMethod, MatrixData, MatrixDataErr, ProgramPreset
-};
 use math::{Mat4};
 
 struct Changes {
@@ -50,7 +47,7 @@ impl Changes {
     }
 }
 
-pub struct Renderable {
+pub struct RenderableTex2 {
     texture_id: Id,
     vertex_id: Id,
     index_id: Id,
@@ -63,9 +60,9 @@ pub struct Renderable {
     active: bool,
 }
 
-impl Renderable {
-    pub fn new(manager: &mut IdManager) -> Renderable {
-        Renderable {
+impl RenderableTex2 {
+    pub fn new(manager: &mut IdManager) -> RenderableTex2 {
+        RenderableTex2 {
             vertex_id: Id::new(manager, IdType::Vertex),
             index_id: Id::new(manager, IdType::Index),
             texture_id: Id::new(manager, IdType::Texture),
@@ -79,8 +76,8 @@ impl Renderable {
         }
     }
 
-    pub fn new_from(other: Arc<Renderable>) -> Renderable {
-        Renderable {
+    pub fn new_from(other: Arc<RenderableTex2>) -> RenderableTex2 {
+        RenderableTex2 {
             vertex_id: other.vertex_id,
             index_id: other.index_id,
             texture_id: other.texture_id,
@@ -94,7 +91,7 @@ impl Renderable {
         }
     }
 
-    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
+    pub fn render(&mut self, window: &mut Window, matrix_data: &mut HashMap<Id, Mat4>) -> Result<(), RenderableErr> {
         if self.changes.dirty_render {
             match self.changes.vertices.clone() {
                 Some(vertices) => {
