@@ -4,16 +4,15 @@ use std::error::{Error};
 use scoped_threadpool::{Pool};
 use time::{precise_time_s};
 use glium::glutin::Event as WindowEvent;
-use std::collections::{HashMap};
 
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
-use logic::{World, WorldErr, EntityData, IdManager, Id};
-use math::{Vec2, Mat4};
-use graphics2::{Window, FrameErr};
+use logic::{World, WorldErr, EntityData, IdManager};
+use math::{Vec2};
+use graphics2::{Window, FrameErr, MatrixData};
 
 pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
-    matrix_data: Arc<HashMap<Id, Mat4>>,
+    matrix_data: Arc<MatrixData>,
     thread_pool: Pool,
 }
 
@@ -24,7 +23,7 @@ impl<T: EntityData<T>> Game<T> {
         let display = Arc::new(Display::new(resolution));
         Game {
             world: Arc::new(World::new(keyboard.clone(), mouse.clone(), display.clone())),
-            matrix_data: Arc::new(HashMap::new()),
+            matrix_data: Arc::new(MatrixData::new()),
             thread_pool: Pool::new(thread_count),
         }
     }
@@ -224,16 +223,17 @@ impl<T: EntityData<T>> Game<T> {
                 return Err(GameErr::World("World Get Mut Entity Data", err));
             },
         }.iter() {
-            match frame.draw_entity(entry.1, self.matrix_data.as_ref()) {
-                Ok(()) => (),
-                Err(err) => {
-                    match frame.end() {
-                        Ok(()) => (),
-                        Err(err) => return Err(GameErr::Frame("Frame End", err)),
-                    };
-                    return Err(GameErr::Frame("Frame Draw Entity", err));
-                },
-            }
+            frame.draw_entity(entry.1.as_ref(), self.matrix_data.as_ref());
+            // match frame.draw_entity(entry.1.as_ref(), self.matrix_data.as_ref()) {
+            //     Ok(()) => (),
+            //     Err(err) => {
+            //         match frame.end() {
+            //             Ok(()) => (),
+            //             Err(err) => return Err(GameErr::Frame("Frame End", err)),
+            //         };
+            //         return Err(GameErr::Frame("Frame Draw Entity", err));
+            //     },
+            // }
         }
         match frame.end() {
             Ok(()) => Ok(()),

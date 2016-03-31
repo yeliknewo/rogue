@@ -1,7 +1,7 @@
 mod game;
 mod world;
 mod ids;
-mod entity_data;
+pub mod entity_data;
 
 pub use self::game::{Game};
 pub use self::world::{World, WorldErr};

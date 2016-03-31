@@ -1,4 +1,6 @@
+#[derive(Copy, Clone)]
 pub enum Renderers {
-    Color,
+    OneColor,
+    MultiColor,
     Texture2d,
 }

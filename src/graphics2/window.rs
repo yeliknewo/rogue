@@ -1,48 +1,47 @@
 use glium::backend::glutin_backend::{GlutinFacade, PollEventsIter};
 use glium::glutin::WindowBuilder as GlutinWindowBuilder;
-use glium::glutin::{CreationError};
+use glium::glutin::{CreationError, get_primary_monitor};
 use glium::{Surface, DisplayBuild, GliumCreationError, SwapBuffersError};
 use glium::Frame as GliumFrame;
 use std::fmt;
 use std::error::Error;
-use std::sync::{Arc};
-use std::collections::{HashMap};
 
-use logic::{EntityData, Id};
-use math::{Mat4};
-use graphics2::{RendererTex2, RendererColor, Renderers};
+use logic::{EntityData};
+use graphics2::{RendererTex2, RendererOneColor, RendererMultiColor, Renderers, MatrixData};
 
 pub struct Frame<'a> {
     frame: GliumFrame,
-    facade: &'a mut GlutinFacade,
-    renderer_color: &'a mut RendererColor,
+    renderer_one_color: &'a mut RendererOneColor,
+    renderer_multi_color: &'a mut RendererMultiColor,
     renderer_texture2d: &'a mut RendererTex2,
 }
 
 impl<'a> Frame<'a> {
-    fn new(facade: &'a mut GlutinFacade, renderer_color: &'a mut RendererColor, renderer_texture2d: &'a mut RendererTex2) -> Frame<'a> {
+    fn new(facade: &'a mut GlutinFacade, renderer_one_color: &'a mut RendererOneColor, renderer_multi_color: &'a mut RendererMultiColor, renderer_texture2d: &'a mut RendererTex2) -> Frame<'a> {
         let mut frame  = facade.draw();
         frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
         Frame {
             frame: frame,
-            facade: facade,
-            renderer_color: renderer_color,
+            renderer_one_color: renderer_one_color,
+            renderer_multi_color: renderer_multi_color,
             renderer_texture2d: renderer_texture2d,
         }
     }
 
-    pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, matrix_data: Arc<HashMap<Id, Mat4>>) {
+    pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, matrix_data: &MatrixData) {
         match entity.get_renderable() {
             Some(renderable) => {
                 match renderable.get_renderer_type() {
-                    Renderers::Color => self.renderer_color.render(renderable),
-                    Renderers::Texture2d => self.renderer_texture2d.render(renderable),
+                    Renderers::OneColor => self.renderer_one_color.render(&mut self.frame, renderable, matrix_data),
+                    Renderers::MultiColor => self.renderer_multi_color.render(&mut self.frame, renderable, matrix_data),
+                    Renderers::Texture2d => self.renderer_texture2d.render(&mut self.frame, renderable, matrix_data),
                 }
-            }
+            },
+            None => (),
         }
     }
 
-    pub fn end(mut self) -> Result<(), FrameErr> {
+    pub fn end(self) -> Result<(), FrameErr> {
         match self.frame.finish() {
             Ok(()) => Ok(()),
             Err(err) => Err(FrameErr::SwapBuffers("Self Frame Finish", err)),
@@ -52,14 +51,12 @@ impl<'a> Frame<'a> {
 
 #[derive(Debug)]
 pub enum FrameErr {
-    Get(&'static str),
     SwapBuffers(&'static str, SwapBuffersError),
 }
 
 impl fmt::Display for FrameErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            FrameErr::Get(_) => write!(f, "Get was None"),
             FrameErr::SwapBuffers(_, ref err) => err.fmt(f),
         }
     }
@@ -68,7 +65,6 @@ impl fmt::Display for FrameErr {
 impl Error for FrameErr {
     fn description(&self) -> &str {
         match *self {
-            FrameErr::Get(_) => "Get was None",
             FrameErr::SwapBuffers(_, ref err) => err.description(),
         }
     }
@@ -76,13 +72,18 @@ impl Error for FrameErr {
 
 pub struct Window {
     facade: GlutinFacade,
-    renderer_color: RendererColor,
+    renderer_one_color: RendererOneColor,
+    renderer_multi_color: RendererMultiColor,
     renderer_texture2d: RendererTex2,
 }
 
 impl<'a> Window {
     pub fn frame(&mut self) -> Frame {
-        Frame::new(&mut self.facade, &mut self.renderer_color, &mut self.renderer_texture2d)
+        Frame::new(&mut self.facade, &mut self.renderer_one_color, &mut self.renderer_multi_color, &mut self.renderer_texture2d)
+    }
+
+    pub fn get_mut_tex2(&mut self) -> &mut RendererTex2 {
+        &mut self.renderer_texture2d
     }
 
     pub fn poll_events(&self) -> PollEventsIter {
@@ -91,62 +92,69 @@ impl<'a> Window {
 }
 
 pub struct WindowBuilder {
-    windowed: Option<Windowed>,
-    resolution: Option<(u32, u32)>,
+    windowed: Windowed,
+    dimensions: (u32, u32),
+    title: String,
 }
 
 impl WindowBuilder {
     pub fn new() -> WindowBuilder {
         WindowBuilder {
-            windowed: None,
-            resolution: None,
+            windowed: Windowed::Windowed,
+            dimensions: (640, 480),
+            title: "Untitled".to_string(),
         }
     }
 
     pub fn build(mut self) -> Result<(Window, (u32, u32)), WindowErr> {
+        let resolution: (u32, u32) = get_primary_monitor().get_dimensions();
         Ok(
             (
                 Window {
                     facade: match self.windowed {
-                        Some(windowed) => {
-                            match windowed {
-                                Windowed::Windowed => {
-                                    let facade = match GlutinWindowBuilder::new()
-                                        .build_glium() {
-                                            Ok(facade) => facade,
-                                            Err(err) => return Err(WindowErr::GliumCreation("GlutinWindowBuilder Build Glium", err)),
-                                        };
-                                    facade
-                                },
-                                // Windowed::Fullscreen => {
-                                //
-                                // },
-                                Windowed::Borderless => {
-                                    let facade = match GlutinWindowBuilder::new()
-                                        .build_glium() {
-                                            Ok(facade) => facade,
-                                            Err(err) => return Err(WindowErr::GliumCreation("GlutinWindowBuilder Build Glium", err)),
-                                        };
-                                    facade
-                                },
-                            }
-                        },
-                        None => {
+                        Windowed::Windowed => {
                             let facade = match GlutinWindowBuilder::new()
+                                .with_title(self.title)
+                                .with_dimensions(self.dimensions.0, self.dimensions.1)
+                                .with_decorations(true)
+                                .with_depth_buffer(24)
+                                .with_vsync()
                                 .build_glium() {
                                     Ok(facade) => facade,
                                     Err(err) => return Err(WindowErr::GliumCreation("GlutinWindowBuilder Build Glium", err)),
                                 };
+                            match facade.get_window() {
+                                Some(window) => window,
+                                None => return Err(WindowErr::Get("Facade Get Window")),
+                            }.set_position(((resolution.0 - self.dimensions.0) / 2) as i32, ((resolution.1 - self.dimensions.1) / 2) as i32);
                             facade
-                        }
+                        },
+                        // Windowed::Fullscreen => {
+                        //
+                        // },
+                        Windowed::Borderless => {
+                            let facade = match GlutinWindowBuilder::new()
+                                .with_title(self.title)
+                                .with_dimensions(resolution.0, resolution.1)
+                                .with_decorations(false)
+                                .with_depth_buffer(24)
+                                .with_vsync()
+                                .build_glium() {
+                                    Ok(facade) => facade,
+                                    Err(err) => return Err(WindowErr::GliumCreation("GlutinWindowBuilder Build Glium", err)),
+                                };
+                            match facade.get_window() {
+                                Some(window) => window,
+                                None => return Err(WindowErr::Get("Facade Get Window")),
+                            }.set_position(0, 0);
+                            facade
+                        },
                     },
-                    renderer_color: RendererColor::new(),
+                    renderer_one_color: RendererOneColor::new(),
+                    renderer_multi_color: RendererMultiColor::new(),
                     renderer_texture2d: RendererTex2::new(),
                 },
-                (
-                    640,
-                    480
-                )
+                self.dimensions
             )
         )
     }

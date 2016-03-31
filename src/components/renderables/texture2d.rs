@@ -4,13 +4,14 @@ use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
 use math::{Mat4};
+use graphics2::{Window, MatrixData};
+use graphics2::texture2d::{Vertex, Index, DrawMethod};
 
 struct Changes {
     vertices: Option<Vec<Vertex>>,
     indices: Option<Vec<Index>>,
     texture: Option<&'static [u8]>,
     draw_method: Option<DrawMethod>,
-    program: Option<ProgramPreset>,
     perspective: Option<(Mat4, Mat4)>,
     view: Option<(Mat4, Mat4)>,
     model: Option<(Mat4, Mat4)>,
@@ -24,7 +25,6 @@ impl Changes {
             indices: None,
             texture: None,
             draw_method: None,
-            program: None,
             perspective: None,
             view: None,
             model: None,
@@ -38,7 +38,6 @@ impl Changes {
             indices: other.indices.clone(),
             texture: other.texture,
             draw_method: other.draw_method.clone(),
-            program: other.program,
             perspective: other.perspective,
             view: other.view,
             model: other.model,
@@ -48,11 +47,10 @@ impl Changes {
 }
 
 pub struct RenderableTex2 {
-    texture_id: Id,
     vertex_id: Id,
     index_id: Id,
+    texture_id: Id,
     draw_method_id: Id,
-    program_id: Id,
     perspective_id: Id,
     view_id: Id,
     model_id: Id,
@@ -67,7 +65,6 @@ impl RenderableTex2 {
             index_id: Id::new(manager, IdType::Index),
             texture_id: Id::new(manager, IdType::Texture),
             draw_method_id: Id::new(manager, IdType::DrawMethod),
-            program_id: Id::new(manager, IdType::Program),
             perspective_id: Id::new(manager, IdType::Perspective),
             view_id: Id::new(manager, IdType::View),
             model_id: Id::new(manager, IdType::Model),
@@ -82,7 +79,6 @@ impl RenderableTex2 {
             index_id: other.index_id,
             texture_id: other.texture_id,
             draw_method_id: other.draw_method_id,
-            program_id: other.program_id,
             perspective_id: other.perspective_id,
             view_id: other.view_id,
             model_id: other.model_id,
@@ -91,11 +87,11 @@ impl RenderableTex2 {
         }
     }
 
-    pub fn render(&mut self, window: &mut Window, matrix_data: &mut HashMap<Id, Mat4>) -> Result<(), RenderableErr> {
+    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
         if self.changes.dirty_render {
             match self.changes.vertices.clone() {
                 Some(vertices) => {
-                    match window.set_vertices(self.vertex_id, vertices) {
+                    match window.get_mut_tex2().set_vertices(self.vertex_id, vertices) {
                         Ok(()) => (),
                         Err(err) => return Err(RenderableErr::Window("Window Set Vertices",err)),
                     }
@@ -194,11 +190,6 @@ impl RenderableTex2 {
         self.changes.dirty_render = true;
     }
 
-    pub fn set_program(&mut self, program_preset: ProgramPreset) {
-        self.changes.program = Some(program_preset);
-        self.changes.dirty_render = true;
-    }
-
     pub fn set_perspective(&mut self, matrix: Mat4) {
         self.changes.perspective = Some((matrix, matrix.to_inverse()));
         self.changes.dirty_render = true;
@@ -290,16 +281,16 @@ impl RenderableTex2 {
 #[derive(Debug)]
 pub enum RenderableErr {
     Poison(&'static str),
-    MatrixData(&'static str, MatrixDataErr),
-    Window(&'static str, WindowErr),
+    // MatrixData(&'static str, MatrixDataErr),
+    // Window(&'static str, WindowErr),
 }
 
 impl fmt::Display for RenderableErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             RenderableErr::Poison(_) => write!(f, "Thread was Poisoned During R/W"),
-            RenderableErr::MatrixData(_, ref err) => err.fmt(f),
-            RenderableErr::Window(_, ref err) => err.fmt(f),
+            // RenderableErr::MatrixData(_, ref err) => err.fmt(f),
+            // RenderableErr::Window(_, ref err) => err.fmt(f),
         }
     }
 }

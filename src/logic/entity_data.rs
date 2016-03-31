@@ -2,7 +2,7 @@ use std::sync::{Arc};
 use std::error::{Error};
 
 use logic::{World, Id, IdManager};
-use graphics::{Window, MatrixData};
+use graphics2::{Window, MatrixData};
 use components::{Renderable, Named, Transform};
 
 pub trait EntityData<T: EntityData<T>> : Send + Sync {

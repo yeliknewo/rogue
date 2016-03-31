@@ -317,7 +317,6 @@ impl<'a> Frame<'a> {
     }
 }
 
-
 #[derive(Debug)]
 pub enum FrameErr {
     Get(&'static str),

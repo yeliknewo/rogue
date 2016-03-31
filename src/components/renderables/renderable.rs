@@ -2,15 +2,18 @@ use std::error::Error;
 use std::fmt;
 
 use graphics2::{Renderers};
+use components::renderables::{RenderableTex2};
 
 pub struct Renderable {
     renderer_type: Renderers,
+    tex2: Option<Box<RenderableTex2>>,
 }
 
 impl Renderable {
     pub fn new(renderer_type: Renderers) -> Renderable {
         Renderable {
             renderer_type: renderer_type,
+            tex2: None,
         }
     }
 

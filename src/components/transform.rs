@@ -23,7 +23,7 @@ impl Transform {
 
     pub fn render(&mut self, renderable: &mut Renderable) {
         if self.dirty_render {
-            renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position));
+            //renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position));
             self.dirty_render = false;
         }
     }
