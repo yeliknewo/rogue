@@ -4,7 +4,7 @@ use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
 use math::{Mat4};
-use graphics2::{Window, MatrixData};
+use graphics2::{Window, WindowErr, MatrixData};
 use graphics2::texture2d::{Vertex, Index, DrawMethod};
 
 struct Changes {
@@ -93,14 +93,14 @@ impl RenderableTex2 {
                 Some(vertices) => {
                     match window.get_mut_tex2().set_vertices(self.vertex_id, vertices) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::Window("Window Set Vertices",err)),
+                        Err(err) => return Err(RenderableErr::RendererTex2("Window Set Vertices", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.indices.clone() {
                 Some(indices) => {
-                    match window.set_indices(self.index_id, indices) {
+                    match window.get_mut_tex2().set_indices(self.index_id, indices) {
                         Ok(()) => (),
                         Err(err) => return Err(RenderableErr::Window("Window Set Indices", err)),
                     }
@@ -109,7 +109,7 @@ impl RenderableTex2 {
             }
             match self.changes.texture {
                 Some(texture) => {
-                    match window.set_texture(self.texture_id, texture) {
+                    match window.get_mut_tex2().set_texture(self.texture_id, texture) {
                         Ok(()) => (),
                         Err(err) => return Err(RenderableErr::Window("Window Set Texture", err)),
                     }
@@ -119,15 +119,6 @@ impl RenderableTex2 {
             match self.changes.draw_method.clone() {
                 Some(draw_method) => {
                     window.set_draw_method(self.draw_method_id, draw_method);
-                },
-                None => (),
-            }
-            match self.changes.program {
-                Some(program) => {
-                    match window.get_program_preset(program) {
-                        Ok(id) => self.set_program_id(id),
-                        Err(err) => return Err(RenderableErr::Window("Window Get Program Preset Program", err)),
-                    }
                 },
                 None => (),
             }
@@ -221,10 +212,6 @@ impl RenderableTex2 {
         self.draw_method_id = id;
     }
 
-    pub fn set_program_id(&mut self, id: Id) {
-        self.program_id = id;
-    }
-
     pub fn set_perspective_id(&mut self, id: Id) {
         self.perspective_id = id;
     }
@@ -279,28 +266,28 @@ impl RenderableTex2 {
 }
 
 #[derive(Debug)]
-pub enum RenderableErr {
+pub enum RenderableTex2Err {
     Poison(&'static str),
     // MatrixData(&'static str, MatrixDataErr),
-    // Window(&'static str, WindowErr),
+    Window(&'static str, WindowErr),
 }
 
-impl fmt::Display for RenderableErr {
+impl fmt::Display for RenderableTex2Err {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            RenderableErr::Poison(_) => write!(f, "Thread was Poisoned During R/W"),
+            RenderableTex2Err::Poison(_) => write!(f, "Thread was Poisoned During R/W"),
             // RenderableErr::MatrixData(_, ref err) => err.fmt(f),
-            // RenderableErr::Window(_, ref err) => err.fmt(f),
+            RenderableTex2Err::Window(_, ref err) => err.fmt(f),
         }
     }
 }
 
-impl Error for RenderableErr {
+impl Error for RenderableTex2Err {
     fn description(&self) -> &str {
         match *self {
-            RenderableErr::Poison(_) => "Thread was Poisoned",
-            RenderableErr::MatrixData(_, ref err) => err.description(),
-            RenderableErr::Window(_, ref err) => err.description(),
+            RenderableTex2Err::Poison(_) => "Thread was Poisoned",
+            // RenderableErr::MatrixData(_, ref err) => err.description(),
+            RenderableTex2Err::Window(_, ref err) => err.description(),
         }
     }
 }

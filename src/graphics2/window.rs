@@ -7,33 +7,41 @@ use std::fmt;
 use std::error::Error;
 
 use logic::{EntityData};
-use graphics2::{RendererTex2, RendererOneColor, RendererMultiColor, Renderers, MatrixData};
+use graphics2::texture2d::{RendererTex2, RendererTex2Err};
+use graphics2::solid_color::{RendererSolidColor, RendererSolidColorErr};
+use graphics2::vertex_color::{RendererVertexColor, RendererVertexColorErr};
+use graphics2::{Renderers, MatrixData};
 
 pub struct Frame<'a> {
     frame: GliumFrame,
-    renderer_one_color: &'a mut RendererOneColor,
-    renderer_multi_color: &'a mut RendererMultiColor,
+    renderer_solid_color: &'a mut RendererSolidColor,
+    renderer_vertex_color: &'a mut RendererVertexColor,
     renderer_texture2d: &'a mut RendererTex2,
 }
 
 impl<'a> Frame<'a> {
-    fn new(facade: &'a mut GlutinFacade, renderer_one_color: &'a mut RendererOneColor, renderer_multi_color: &'a mut RendererMultiColor, renderer_texture2d: &'a mut RendererTex2) -> Frame<'a> {
+    fn new(facade: &'a mut GlutinFacade, renderer_solid_color: &'a mut RendererSolidColor, renderer_vertex_color: &'a mut RendererVertexColor, renderer_texture2d: &'a mut RendererTex2) -> Frame<'a> {
         let mut frame  = facade.draw();
         frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
         Frame {
             frame: frame,
-            renderer_one_color: renderer_one_color,
-            renderer_multi_color: renderer_multi_color,
+            renderer_solid_color: renderer_solid_color,
+            renderer_vertex_color: renderer_vertex_color,
             renderer_texture2d: renderer_texture2d,
         }
     }
 
-    pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, matrix_data: &MatrixData) {
+    pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, matrix_data: &MatrixData) -> Result<(), FrameErr> {
         match entity.get_renderable() {
             Some(renderable) => {
                 match renderable.get_renderer_type() {
-                    Renderers::OneColor => self.renderer_one_color.render(&mut self.frame, renderable, matrix_data),
-                    Renderers::MultiColor => self.renderer_multi_color.render(&mut self.frame, renderable, matrix_data),
+                    Renderers::SolidColor => {
+                        match self.renderer_solid_color.render(&mut self.frame, renderable, matrix_data) {
+                            Ok(()) => (),
+                            Err(err) => return Err(FrameErr::SolidColor("Self RendererSolidColor Render", err)),
+                        }
+                    },
+                    Renderers::VertexColor => self.renderer_vertex_color.render(&mut self.frame, renderable, matrix_data),
                     Renderers::Texture2d => self.renderer_texture2d.render(&mut self.frame, renderable, matrix_data),
                 }
             },
@@ -52,6 +60,9 @@ impl<'a> Frame<'a> {
 #[derive(Debug)]
 pub enum FrameErr {
     SwapBuffers(&'static str, SwapBuffersError),
+    RendererTex2(&'static str, RendererTex2Err),
+    RendererSolidColor(&'static str, RendererSolidColorErr),
+    RendererVertexColor(&'static str, RendererVertexColorErr),
 }
 
 impl fmt::Display for FrameErr {
@@ -72,14 +83,14 @@ impl Error for FrameErr {
 
 pub struct Window {
     facade: GlutinFacade,
-    renderer_one_color: RendererOneColor,
-    renderer_multi_color: RendererMultiColor,
+    renderer_solid_color: RendererSolidColor,
+    renderer_vertex_color: RendererVertexColor,
     renderer_texture2d: RendererTex2,
 }
 
 impl<'a> Window {
     pub fn frame(&mut self) -> Frame {
-        Frame::new(&mut self.facade, &mut self.renderer_one_color, &mut self.renderer_multi_color, &mut self.renderer_texture2d)
+        Frame::new(&mut self.facade, &mut self.renderer_solid_color, &mut self.renderer_vertex_color, &mut self.renderer_texture2d)
     }
 
     pub fn get_mut_tex2(&mut self) -> &mut RendererTex2 {
@@ -150,8 +161,8 @@ impl WindowBuilder {
                             facade
                         },
                     },
-                    renderer_one_color: RendererOneColor::new(),
-                    renderer_multi_color: RendererMultiColor::new(),
+                    renderer_solid_color: RendererSolidColor::new(),
+                    renderer_vertex_color: RendererVertexColor::new(),
                     renderer_texture2d: RendererTex2::new(),
                 },
                 self.dimensions

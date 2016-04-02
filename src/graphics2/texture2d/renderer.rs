@@ -1,19 +1,29 @@
 use std::sync::{Arc};
 use std::error::Error;
 use std::fmt;
+use std::collections::{HashMap};
 use glium::Frame as GliumFrame;
 use glium::{Surface, DrawError};
 
+use logic::{Id};
 use components::{Renderable};
 use graphics2::{MatrixData};
-use graphics2::texture2d::vertex::init_vertex;
+use graphics2::texture2d::{Vertex, init_vertex};
 
-pub struct RendererTex2;
+pub struct RendererTex2 {
+    vertex_buffers: HashMap<Id, Vertex>,
+}
 
 impl RendererTex2 {
     pub fn new() -> RendererTex2 {
         init_vertex();
-        RendererTex2
+        RendererTex2 {
+            vertex_buffers: HashMap::new(),
+        }
+    }
+
+    pub fn set_vertices(&mut self, id: Id, vertices: Vec<Vertex>) -> Result<(), RendererTex2Err> {
+
     }
 
     pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) -> Result<(), RendererTex2Err> {

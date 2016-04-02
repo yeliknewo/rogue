@@ -1,5 +1,6 @@
 use std::collections::{HashMap};
 use std::fmt::{Display, Formatter, Error};
+use std::hash::{Hash};
 
 #[derive(Copy, Clone, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct Id {
@@ -20,8 +21,13 @@ impl Display for Id {
     }
 }
 
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+pub trait IdTypeTrait {
+
+}
+
+#[derive(Clone, Eq, Hash, PartialEq)]
 pub enum IdType {
+    Custom(Box<IdType>),
     World,
     Entity,
     Component,
