@@ -4,7 +4,7 @@ use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
 use math::{Mat4};
-use graphics2::{Window, WindowErr, MatrixData};
+use graphics2::{Window, WindowErr, MatrixData, Renderers};
 use graphics2::texture2d::{Vertex, Index, DrawMethod, RendererTex2Err};
 
 struct Changes {
@@ -87,65 +87,56 @@ impl RenderableTex2 {
         }
     }
 
-    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableTex2Err> {
+    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData, renderers: &mut Renderers) -> Result<(), RenderableTex2Err> {
         if self.changes.dirty_render {
             match self.changes.vertices.clone() {
                 Some(vertices) => {
-                    match window.get_mut_tex2().set_vertices(self.vertex_id, window, vertices) {
+                    match renderers.get_mut_texture2d().set_vertices(self.vertex_id, window, vertices) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Window Get Mut Tex2 Set Vertices", err)),
+                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Renderers Get Mut Tex2 Set Vertices", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.indices.clone() {
                 Some(indices) => {
-                    match window.get_mut_tex2().set_indices(self.index_id, window, indices) {
+                    match renderers.get_mut_texture2d().set_indices(self.index_id, window, indices) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Window Get Mut Tex2 Set Indices", err)),
+                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Renderers Get Mut Tex2 Set Indices", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.texture {
                 Some(texture) => {
-                    match window.get_mut_tex2().set_texture(self.texture_id, texture) {
+                    match renderers.get_mut_texture2d().set_texture(self.texture_id, window, texture) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableTex2Err::Window("Window Set Texture", err)),
+                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Renderers Get Mut Texture2d Set Texture", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.draw_method.clone() {
                 Some(draw_method) => {
-                    window.set_draw_method(self.draw_method_id, draw_method);
+                    renderers.get_mut_texture2d().set_draw_method(self.draw_method_id, draw_method);
                 },
                 None => (),
             }
             match self.changes.perspective.clone() {
                 Some(perspective) => {
-                    match matrix_data.set_matrix(self.perspective_id, perspective.0, perspective.1) {
-                        Ok(()) => (),
-                        Err(err) => return Err(RenderableTex2Err::MatrixData("MatrixData Set Perspective Matrix", err)),
-                    }
+                    matrix_data.set_matrix(self.perspective_id, perspective.0, perspective.1);
                 },
                 None => (),
             }
             match self.changes.view.clone() {
                 Some(view) => {
-                    match matrix_data.set_matrix(self.view_id, view.0, view.1) {
-                        Ok(()) => (),
-                        Err(err) => return Err(RenderableTex2Err::MatrixData("MatrixData Set View Matrix", err)),
-                    }
+                    matrix_data.set_matrix(self.view_id, view.0, view.1);
                 },
                 None => (),
             }
             match self.changes.model.clone() {
                 Some(model) => {
-                    match matrix_data.set_model_matrix(self.model_id, model.0, model.1) {
-                        Ok(()) => (),
-                        Err(err) => return Err(RenderableTex2Err::MatrixData("MatrixData Set Model matrix", err)),
-                    }
+                    matrix_data.set_matrix(self.model_id, model.0, model.1);
                 },
                 None => (),
             }
@@ -264,7 +255,6 @@ impl RenderableTex2 {
 #[derive(Debug)]
 pub enum RenderableTex2Err {
     Poison(&'static str),
-    // MatrixData(&'static str, MatrixDataErr),
     Window(&'static str, WindowErr),
     RendererTex2(&'static str, RendererTex2Err),
 }
@@ -273,8 +263,8 @@ impl fmt::Display for RenderableTex2Err {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             RenderableTex2Err::Poison(_) => write!(f, "Thread was Poisoned During R/W"),
-            // RenderableErr::MatrixData(_, ref err) => err.fmt(f),
             RenderableTex2Err::Window(_, ref err) => err.fmt(f),
+            RenderableTex2Err::RendererTex2(_, ref err) => err.fmt(f),
         }
     }
 }
@@ -283,8 +273,8 @@ impl Error for RenderableTex2Err {
     fn description(&self) -> &str {
         match *self {
             RenderableTex2Err::Poison(_) => "Thread was Poisoned",
-            // RenderableErr::MatrixData(_, ref err) => err.description(),
             RenderableTex2Err::Window(_, ref err) => err.description(),
+            RenderableTex2Err::RendererTex2(_, ref err) => err.description(),
         }
     }
 }

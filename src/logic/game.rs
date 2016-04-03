@@ -8,7 +8,7 @@ use glium::glutin::Event as WindowEvent;
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
 use logic::{World, WorldErr, EntityData, IdManager};
 use math::{Vec2};
-use graphics2::{Window, FrameErr, MatrixData};
+use graphics2::{Window, FrameErr, MatrixData, Renderers, RenderersErr};
 
 pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
@@ -96,6 +96,11 @@ impl<T: EntityData<T>> Game<T> {
     }
 
     pub fn run(&mut self, window: &mut Window, manager: &mut IdManager) -> Result<(), GameErr> {
+        let mut renderers = match Renderers::new(window) {
+            Ok(renderers) => renderers,
+            Err(err) => return Err(GameErr::Renderers("Renderers New", err)),
+        };
+
         let tps: f64 = 60.0;
         let tps_s: f64 = 1.0 / tps;
 
@@ -178,10 +183,10 @@ impl<T: EntityData<T>> Game<T> {
                 ticks += 1;
                 tick_number += 1;
             }
-            match self.render(window) {
-                Ok(()) => (),
+            renderers = match self.render(window, renderers) {
+                Ok(renderers) => renderers,
                 Err(err) => return Err(GameErr::Game("Self Render", Box::new(err))),
-            }
+            };
             frames += 1;
             if now > i + 1.0 {
                 i += 1.0;
@@ -192,7 +197,7 @@ impl<T: EntityData<T>> Game<T> {
         }
     }
 
-    fn render(&mut self, window: &mut Window) -> Result<(), GameErr> {
+    fn render(&mut self, window: &mut Window, renderers: Renderers) -> Result<Renderers, GameErr> {
         let mut world = match Arc::get_mut(&mut self.world) {
             Some(world) => world,
             None => return Err(GameErr::GetMut("Arc Get Mut Self World")),
@@ -212,12 +217,12 @@ impl<T: EntityData<T>> Game<T> {
                 Err(err) => return Err(GameErr::Entity("Entity Render", err)),
             }
         }
-        let mut frame = window.frame();
+        let mut frame = window.frame(renderers);
         for entry in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
             Err(err) => {
                 match frame.end() {
-                    Ok(()) => (),
+                    Ok(renderers) => (),
                     Err(err) => return Err(GameErr::Frame("Frame End", err)),
                 };
                 return Err(GameErr::World("World Get Mut Entity Data", err));
@@ -236,7 +241,7 @@ impl<T: EntityData<T>> Game<T> {
             // }
         }
         match frame.end() {
-            Ok(()) => Ok(()),
+            Ok(renderers) => Ok(renderers),
             Err(err) => Err(GameErr::Frame("Frame End", err)),
         }
     }
@@ -309,6 +314,7 @@ pub enum GameErr {
     Game(&'static str, Box<GameErr>),
     Entity(&'static str, Box<Error>),
     Frame(&'static str, FrameErr),
+    Renderers(&'static str, RenderersErr),
     GetMut(&'static str),
     BadIndex(&'static str),
 }
@@ -320,6 +326,7 @@ impl fmt::Display for GameErr {
             GameErr::Game(_, ref err) => err.fmt(f),
             GameErr::Entity(_, ref err) => err.fmt(f),
             GameErr::Frame(_, ref err) => err.fmt(f),
+            GameErr::Renderers(_, ref err) => err.fmt(f),
             GameErr::GetMut(_) => write!(f, "Get Mut was None"),
             GameErr::BadIndex(_) => write!(f, "Index was None"),
         }
@@ -333,6 +340,7 @@ impl Error for GameErr {
             GameErr::Game(_, ref err) => err.description(),
             GameErr::Entity(_, ref err) => err.description(),
             GameErr::Frame(_, ref err) => err.description(),
+            GameErr::Renderers(_, ref err) => err.description(),
             GameErr::GetMut(_) => "Get Mut was None",
             GameErr::BadIndex(_) => "Index was None",
         }

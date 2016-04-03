@@ -12,24 +12,20 @@ use logic::{EntityData};
 use graphics2::texture2d::{RendererTex2, RendererTex2Err};
 use graphics2::solid_color::{RendererSolidColor, RendererSolidColorErr};
 use graphics2::vertex_color::{RendererVertexColor, RendererVertexColorErr};
-use graphics2::{RendererType, MatrixData};
+use graphics2::{Renderers, RendererType, MatrixData};
 
-pub struct Frame<'a> {
+pub struct Frame {
     frame: GliumFrame,
-    renderer_solid_color: &'a mut RendererSolidColor,
-    renderer_vertex_color: &'a mut RendererVertexColor,
-    renderer_texture2d: &'a mut RendererTex2,
+    renderers: Renderers,
 }
 
-impl<'a> Frame<'a> {
-    fn new(facade: &'a mut GlutinFacade, renderer_solid_color: &'a mut RendererSolidColor, renderer_vertex_color: &'a mut RendererVertexColor, renderer_texture2d: &'a mut RendererTex2) -> Frame<'a> {
+impl Frame {
+    fn new(facade: & mut GlutinFacade, renderers: Renderers) -> Frame {
         let mut frame  = facade.draw();
         frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
         Frame {
             frame: frame,
-            renderer_solid_color: renderer_solid_color,
-            renderer_vertex_color: renderer_vertex_color,
-            renderer_texture2d: renderer_texture2d,
+            renderers: renderers,
         }
     }
 
@@ -37,15 +33,15 @@ impl<'a> Frame<'a> {
         match entity.get_renderable() {
             Some(renderable) => {
                 match renderable.get_renderer_type() {
-                    RendererType::SolidColor => match self.renderer_solid_color.render(&mut self.frame, renderable, matrix_data) {
+                    RendererType::SolidColor => match self.renderers.get_mut_solid_color().render(&mut self.frame, renderable, matrix_data) {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererSolidColor("Self RendererSolidColor Render", err)),
                     },
-                    RendererType::VertexColor => match self.renderer_vertex_color.render(&mut self.frame, renderable, matrix_data) {
+                    RendererType::VertexColor => match self.renderers.get_mut_vertex_color().render(&mut self.frame, renderable, matrix_data) {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererVertexColor("Self RendererVertexColor Render", err)),
                     },
-                    RendererType::Texture2d => match self.renderer_texture2d.render(&mut self.frame, renderable, matrix_data) {
+                    RendererType::Texture2d => match self.renderers.get_mut_texture2d().render(&mut self.frame, renderable, matrix_data) {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererTex2("Self Renderer Texture2d Render", err)),
                     },
@@ -55,9 +51,9 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn end(self) -> Result<(), FrameErr> {
+    pub fn end(self) -> Result<Renderers, FrameErr> {
         match self.frame.finish() {
-            Ok(()) => Ok(()),
+            Ok(()) => Ok(self.renderers),
             Err(err) => Err(FrameErr::SwapBuffers("Self Frame Finish", err)),
         }
     }
@@ -75,6 +71,9 @@ impl fmt::Display for FrameErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             FrameErr::SwapBuffers(_, ref err) => err.fmt(f),
+            FrameErr::RendererTex2(_, ref err) => err.fmt(f),
+            FrameErr::RendererSolidColor(_, ref err) => err.fmt(f),
+            FrameErr::RendererVertexColor(_, ref err) => err.fmt(f),
         }
     }
 }
@@ -83,22 +82,28 @@ impl Error for FrameErr {
     fn description(&self) -> &str {
         match *self {
             FrameErr::SwapBuffers(_, ref err) => err.description(),
+            FrameErr::RendererTex2(_, ref err) => err.description(),
+            FrameErr::RendererSolidColor(_, ref err) => err.description(),
+            FrameErr::RendererVertexColor(_, ref err) => err.description(),
         }
     }
 }
 
 pub struct Window {
     facade: GlutinFacade,
-
 }
 
 impl<'a> Window {
-    pub fn frame(&mut self) -> Frame {
-        Frame::new(&mut self.facade, &mut self.renderer_solid_color, &mut self.renderer_vertex_color, &mut self.renderer_texture2d)
+    pub fn frame(&mut self, renderers: Renderers) -> Frame {
+        Frame::new(&mut self.facade, renderers)
     }
 
     pub fn poll_events(&self) -> PollEventsIter {
         self.facade.poll_events()
+    }
+
+    pub fn get_facade(&self) -> &GlutinFacade {
+        &self.facade
     }
 }
 
