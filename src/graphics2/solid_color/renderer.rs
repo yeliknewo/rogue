@@ -14,7 +14,7 @@ impl RendererSolidColor {
         RendererSolidColor
     }
 
-    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) {
+    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) -> Result<(), RendererSolidColorErr> {
         // frame.draw();
     }
 

@@ -32,6 +32,18 @@ impl MatrixData {
         }
     }
 
+    pub fn set_matrix(&mut self, id: Id, mat4: Mat4, inverse: Mat4) -> Result<(), MatrixDataErr> {
+
+    }
+
+    pub fn get_matrix(&self, id: Id) -> Option<Mat4> {
+
+    }
+
+    pub fn get_inverse(&self, id: Id) -> Option<Mat4> {
+
+    }
+
     // pub fn backwards2(&self, vec2: Vec2, entity: &Renderable) -> Result<Vec2, MatrixDataErr> {
     //     Ok(
     //         Vec2::from(match self.get_perspective_inverse(entity) {

@@ -1,18 +1,18 @@
 use std::error::Error;
 use std::fmt;
 
-use graphics2::{Renderers};
+use graphics2::{RendererType};
 use components::renderables::{RenderableTex2, RenderableVertexColor, RenderableSolidColor};
 
 pub struct Renderable {
-    renderer_type: Renderers,
+    renderer_type: RendererType,
     tex2: Option<Box<RenderableTex2>>,
     vertex_color: Option<Box<RenderableVertexColor>>,
     solid_color: Option<Box<RenderableSolidColor>>,
 }
 
 impl Renderable {
-    pub fn new(renderer_type: Renderers) -> Renderable {
+    pub fn new(renderer_type: RendererType) -> Renderable {
         Renderable {
             renderer_type: renderer_type,
             tex2: None,
@@ -21,7 +21,7 @@ impl Renderable {
         }
     }
 
-    pub fn get_renderer_type(&self) -> Renderers {
+    pub fn get_renderer_type(&self) -> RendererType {
         self.renderer_type
     }
 

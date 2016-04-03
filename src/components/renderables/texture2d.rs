@@ -5,7 +5,7 @@ use std::error::Error;
 use logic::{Id, IdManager, IdType};
 use math::{Mat4};
 use graphics2::{Window, WindowErr, MatrixData};
-use graphics2::texture2d::{Vertex, Index, DrawMethod};
+use graphics2::texture2d::{Vertex, Index, DrawMethod, RendererTex2Err};
 
 struct Changes {
     vertices: Option<Vec<Vertex>>,
@@ -87,22 +87,22 @@ impl RenderableTex2 {
         }
     }
 
-    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableErr> {
+    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData) -> Result<(), RenderableTex2Err> {
         if self.changes.dirty_render {
             match self.changes.vertices.clone() {
                 Some(vertices) => {
-                    match window.get_mut_tex2().set_vertices(self.vertex_id, vertices) {
+                    match window.get_mut_tex2().set_vertices(self.vertex_id, window, vertices) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::RendererTex2("Window Set Vertices", err)),
+                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Window Get Mut Tex2 Set Vertices", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.indices.clone() {
                 Some(indices) => {
-                    match window.get_mut_tex2().set_indices(self.index_id, indices) {
+                    match window.get_mut_tex2().set_indices(self.index_id, window, indices) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::Window("Window Set Indices", err)),
+                        Err(err) => return Err(RenderableTex2Err::RendererTex2("Window Get Mut Tex2 Set Indices", err)),
                     }
                 },
                 None => (),
@@ -111,7 +111,7 @@ impl RenderableTex2 {
                 Some(texture) => {
                     match window.get_mut_tex2().set_texture(self.texture_id, texture) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::Window("Window Set Texture", err)),
+                        Err(err) => return Err(RenderableTex2Err::Window("Window Set Texture", err)),
                     }
                 },
                 None => (),
@@ -124,18 +124,18 @@ impl RenderableTex2 {
             }
             match self.changes.perspective.clone() {
                 Some(perspective) => {
-                    match matrix_data.set_perspective_matrix(self.perspective_id, perspective.0, perspective.1) {
+                    match matrix_data.set_matrix(self.perspective_id, perspective.0, perspective.1) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::MatrixData("MatrixData Set Perspective Matrix", err)),
+                        Err(err) => return Err(RenderableTex2Err::MatrixData("MatrixData Set Perspective Matrix", err)),
                     }
                 },
                 None => (),
             }
             match self.changes.view.clone() {
                 Some(view) => {
-                    match matrix_data.set_view_matrix(self.view_id, view.0, view.1) {
+                    match matrix_data.set_matrix(self.view_id, view.0, view.1) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::MatrixData("MatrixData Set View Matrix", err)),
+                        Err(err) => return Err(RenderableTex2Err::MatrixData("MatrixData Set View Matrix", err)),
                     }
                 },
                 None => (),
@@ -144,7 +144,7 @@ impl RenderableTex2 {
                 Some(model) => {
                     match matrix_data.set_model_matrix(self.model_id, model.0, model.1) {
                         Ok(()) => (),
-                        Err(err) => return Err(RenderableErr::MatrixData("MatrixData Set Model matrix", err)),
+                        Err(err) => return Err(RenderableTex2Err::MatrixData("MatrixData Set Model matrix", err)),
                     }
                 },
                 None => (),
@@ -248,10 +248,6 @@ impl RenderableTex2 {
         self.draw_method_id
     }
 
-    pub fn get_program_id(&self) -> Id {
-        self.program_id
-    }
-
     pub fn get_perspective_id(&self) -> Id {
         self.perspective_id
     }
@@ -270,6 +266,7 @@ pub enum RenderableTex2Err {
     Poison(&'static str),
     // MatrixData(&'static str, MatrixDataErr),
     Window(&'static str, WindowErr),
+    RendererTex2(&'static str, RendererTex2Err),
 }
 
 impl fmt::Display for RenderableTex2Err {

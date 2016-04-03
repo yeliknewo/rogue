@@ -5,12 +5,14 @@ use glium::{Surface, DisplayBuild, GliumCreationError, SwapBuffersError};
 use glium::Frame as GliumFrame;
 use std::fmt;
 use std::error::Error;
+use std::sync::{Arc};
 
 use logic::{EntityData};
+
 use graphics2::texture2d::{RendererTex2, RendererTex2Err};
 use graphics2::solid_color::{RendererSolidColor, RendererSolidColorErr};
 use graphics2::vertex_color::{RendererVertexColor, RendererVertexColorErr};
-use graphics2::{Renderers, MatrixData};
+use graphics2::{RendererType, MatrixData};
 
 pub struct Frame<'a> {
     frame: GliumFrame,
@@ -35,17 +37,21 @@ impl<'a> Frame<'a> {
         match entity.get_renderable() {
             Some(renderable) => {
                 match renderable.get_renderer_type() {
-                    Renderers::SolidColor => {
-                        match self.renderer_solid_color.render(&mut self.frame, renderable, matrix_data) {
-                            Ok(()) => (),
-                            Err(err) => return Err(FrameErr::SolidColor("Self RendererSolidColor Render", err)),
-                        }
+                    RendererType::SolidColor => match self.renderer_solid_color.render(&mut self.frame, renderable, matrix_data) {
+                        Ok(()) => Ok(()),
+                        Err(err) => Err(FrameErr::RendererSolidColor("Self RendererSolidColor Render", err)),
                     },
-                    Renderers::VertexColor => self.renderer_vertex_color.render(&mut self.frame, renderable, matrix_data),
-                    Renderers::Texture2d => self.renderer_texture2d.render(&mut self.frame, renderable, matrix_data),
+                    RendererType::VertexColor => match self.renderer_vertex_color.render(&mut self.frame, renderable, matrix_data) {
+                        Ok(()) => Ok(()),
+                        Err(err) => Err(FrameErr::RendererVertexColor("Self RendererVertexColor Render", err)),
+                    },
+                    RendererType::Texture2d => match self.renderer_texture2d.render(&mut self.frame, renderable, matrix_data) {
+                        Ok(()) => Ok(()),
+                        Err(err) => Err(FrameErr::RendererTex2("Self Renderer Texture2d Render", err)),
+                    },
                 }
             },
-            None => (),
+            None => Ok(()),
         }
     }
 
@@ -83,18 +89,12 @@ impl Error for FrameErr {
 
 pub struct Window {
     facade: GlutinFacade,
-    renderer_solid_color: RendererSolidColor,
-    renderer_vertex_color: RendererVertexColor,
-    renderer_texture2d: RendererTex2,
+
 }
 
 impl<'a> Window {
     pub fn frame(&mut self) -> Frame {
         Frame::new(&mut self.facade, &mut self.renderer_solid_color, &mut self.renderer_vertex_color, &mut self.renderer_texture2d)
-    }
-
-    pub fn get_mut_tex2(&mut self) -> &mut RendererTex2 {
-        &mut self.renderer_texture2d
     }
 
     pub fn poll_events(&self) -> PollEventsIter {
@@ -161,9 +161,7 @@ impl WindowBuilder {
                             facade
                         },
                     },
-                    renderer_solid_color: RendererSolidColor::new(),
-                    renderer_vertex_color: RendererVertexColor::new(),
-                    renderer_texture2d: RendererTex2::new(),
+
                 },
                 self.dimensions
             )
