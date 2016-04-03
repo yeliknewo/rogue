@@ -16,8 +16,14 @@ impl Renderers {
     pub fn new(window: &mut Window) -> Result<Renderers, RenderersErr> {
         Ok(
             Renderers {
-                renderer_solid_color: RendererSolidColor::new(),
-                renderer_vertex_color: RendererVertexColor::new(),
+                renderer_solid_color: match RendererSolidColor::new(window) {
+                    Ok(solid) => solid,
+                    Err(err) => return Err(RenderersErr::RendererSolidColor("RendererSolidColor New", err)),
+                },
+                renderer_vertex_color: match RendererVertexColor::new(window) {
+                    Ok(vertex) => vertex,
+                    Err(err) => return Err(RenderersErr::RendererVertexColor("RendererVertexColor New", err)),
+                },
                 renderer_texture2d: match RendererTex2::new(window) {
                     Ok(tex2) => tex2,
                     Err(err) => return Err(RenderersErr::RendererTexture2d("RendererTex2 New", err)),
@@ -44,6 +50,7 @@ pub enum RendererType {
     SolidColor,
     VertexColor,
     Texture2d,
+    Empty,
 }
 
 #[derive(Debug)]

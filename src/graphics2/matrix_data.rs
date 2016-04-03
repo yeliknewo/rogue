@@ -1,22 +1,18 @@
-use std::sync::{Arc};
 use std::collections::{HashMap};
-use std::fmt;
-use std::error::Error;
 
 use logic::{Id};
-use math::{Mat4, Vec2, Vec3, Vec4};
-use components::{Renderable};
+use math::{Mat4};
 
 pub struct MatrixData {
-    mat4s: Arc<HashMap<Id, Mat4>>,
-    inverse: Arc<HashMap<Id, Mat4>>,
+    mat4s: HashMap<Id, Mat4>,
+    inverse: HashMap<Id, Mat4>,
 }
 
 impl MatrixData {
     pub fn new() -> MatrixData {
         MatrixData {
-            mat4s: Arc::new(HashMap::new()),
-            inverse: Arc::new(HashMap::new()),
+            mat4s: HashMap::new(),
+            inverse: HashMap::new(),
         }
     }
 

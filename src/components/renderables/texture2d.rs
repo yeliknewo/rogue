@@ -55,7 +55,6 @@ pub struct RenderableTex2 {
     view_id: Id,
     model_id: Id,
     changes: Changes,
-    active: bool,
 }
 
 impl RenderableTex2 {
@@ -65,11 +64,10 @@ impl RenderableTex2 {
             index_id: Id::new(manager, IdType::Index),
             texture_id: Id::new(manager, IdType::Texture),
             draw_method_id: Id::new(manager, IdType::DrawMethod),
-            perspective_id: Id::new(manager, IdType::Perspective),
-            view_id: Id::new(manager, IdType::View),
-            model_id: Id::new(manager, IdType::Model),
+            perspective_id: Id::new(manager, IdType::Matrix),
+            view_id: Id::new(manager, IdType::Matrix),
+            model_id: Id::new(manager, IdType::Matrix),
             changes: Changes::new(),
-            active: true,
         }
     }
 
@@ -83,7 +81,6 @@ impl RenderableTex2 {
             view_id: other.view_id,
             model_id: other.model_id,
             changes: Changes::new_from(&other.changes),
-            active: other.active,
         }
     }
 
@@ -213,14 +210,6 @@ impl RenderableTex2 {
 
     pub fn set_model_id(&mut self, id: Id) {
         self.model_id = id;
-    }
-
-    pub fn set_active(&mut self, active: bool) {
-        self.active = active;
-    }
-
-    pub fn get_active(&self) -> bool {
-        self.active
     }
 
     pub fn get_vertex_id(&self) -> Id {

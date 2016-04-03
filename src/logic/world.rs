@@ -13,6 +13,7 @@ pub struct World<T: EntityData<T>> {
     display: Arc<Display>,
     entity_data: Arc<HashMap<Id, Arc<T>>>,
     names: Arc<HashMap<&'static str, Id>>,
+    to_remove: Vec<Id>,
 }
 
 impl<T: EntityData<T>> World<T> {
@@ -23,6 +24,7 @@ impl<T: EntityData<T>> World<T> {
             display: display,
             entity_data: Arc::new(HashMap::new()),
             names: Arc::new(HashMap::new()),
+            to_remove: vec!(),
         }
     }
 
@@ -107,11 +109,21 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    pub fn remove_entity(&mut self, id: Id) -> Result<Option<Arc<T>>, WorldErr> {
+    pub fn tick_mut(&mut self) -> Result<(), WorldErr> {
+        let len = self.to_remove.len();
         match Arc::get_mut(&mut self.entity_data) {
-            Some(entity_data) => Ok(entity_data.remove(&id)),
-            None => Err(WorldErr::GetMut("Arc Get Mut Self EntityData")),
+            Some(entity_data) => {
+                for id in self.to_remove.drain(0..len) {
+                    entity_data.remove(&id);
+                }
+            },
+            None => return Err(WorldErr::GetMut("Arc Get Mut")),
         }
+        Ok(())
+    }
+
+    pub fn queue_remove_entity(&mut self, id: Id) {
+        self.to_remove.push(id);
     }
 
     pub fn get_entity_by_id(&self, id: Id) -> Option<Arc<T>> {

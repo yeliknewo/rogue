@@ -1,6 +1,5 @@
 use std::collections::{HashMap};
 use std::fmt::{Display, Formatter, Error};
-use std::hash::{Hash};
 
 #[derive(Copy, Clone, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct Id {
@@ -35,10 +34,7 @@ pub enum IdType {
     Index,
     Texture,
     DrawMethod,
-    Program,
-    Perspective,
-    View,
-    Model,
+    Matrix,
 }
 
 pub struct IdManager {

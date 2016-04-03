@@ -6,7 +6,6 @@ use glium::Frame as GliumFrame;
 use glium::texture::texture2d::{Texture2d};
 use glium::texture::{RawImage2d};
 use glium::{Surface, DrawError, VertexBuffer, DrawParameters, IndexBuffer, Program, ProgramCreationError};
-use glium::backend::glutin_backend::{GlutinFacade};
 use glium;
 use image::{load_from_memory, ImageError};
 
@@ -103,7 +102,7 @@ impl RendererTex2 {
     }
 
     pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) -> Result<(), RendererTex2Err> {
-        let renderable_tex2 = match renderable.get_tex2() {
+        let renderable_tex2 = match renderable.get_texture2d() {
             Some(renderable) => renderable,
             None => return Err(RendererTex2Err::Get("Renderable Get Tex2")),
         };
@@ -118,7 +117,22 @@ impl RendererTex2 {
             },
             &self.program,
             &uniform!(
-
+                tex: match self.texture_buffers.get(&renderable_tex2.get_texture_id()) {
+                    Some(texture) => texture,
+                    None => return Err(RendererTex2Err::Get("Self Texture Buffers Get")),
+                },
+                perspective: match matrix_data.get_matrix(renderable_tex2.get_perspective_id()) {
+                    Some(perspective) => *perspective,
+                    None => return Err(RendererTex2Err::Get("Matrix Data Get Matrix")),
+                },
+                view: match matrix_data.get_matrix(renderable_tex2.get_view_id()) {
+                    Some(view) => *view,
+                    None => return Err(RendererTex2Err::Get("Matrix Data Get Matrix")),
+                },
+                model: match matrix_data.get_matrix(renderable_tex2.get_model_id()) {
+                    Some(model) => *model,
+                    None => return Err(RendererTex2Err::Get("Matrix Data Get Matrix")),
+                }
             ),
             match self.draw_parameters.get(&renderable_tex2.get_draw_method_id()) {
                 Some(dp) => dp,

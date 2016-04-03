@@ -198,6 +198,7 @@ impl<T: EntityData<T>> Game<T> {
     }
 
     fn render(&mut self, window: &mut Window, renderers: Renderers) -> Result<Renderers, GameErr> {
+        let mut renderers = renderers;
         let mut world = match Arc::get_mut(&mut self.world) {
             Some(world) => world,
             None => return Err(GameErr::GetMut("Arc Get Mut Self World")),
@@ -212,33 +213,36 @@ impl<T: EntityData<T>> Game<T> {
                 }.render(window, match Arc::get_mut(&mut self.matrix_data) {
                     Some(matrix_data) => matrix_data,
                     None => return Err(GameErr::GetMut("Arc Get Mut Self Matrix Data")),
-                }) {
+                }, &mut renderers) {
                 Ok(()) => (),
                 Err(err) => return Err(GameErr::Entity("Entity Render", err)),
             }
+        }
+        match world.tick_mut() {
+            Ok(()) => (),
+            Err(err) => return Err(GameErr::World("World Tick Mut", err)),
         }
         let mut frame = window.frame(renderers);
         for entry in match world.get_mut_entity_data() {
             Ok(entity_data) => entity_data,
             Err(err) => {
                 match frame.end() {
-                    Ok(renderers) => (),
+                    Ok(_) => (),
                     Err(err) => return Err(GameErr::Frame("Frame End", err)),
                 };
-                return Err(GameErr::World("World Get Mut Entity Data", err));
+                return Err(GameErr::World("World Get Mut Entity Data", err))
             },
         }.iter() {
-            frame.draw_entity(entry.1.as_ref(), self.matrix_data.as_ref());
-            // match frame.draw_entity(entry.1.as_ref(), self.matrix_data.as_ref()) {
-            //     Ok(()) => (),
-            //     Err(err) => {
-            //         match frame.end() {
-            //             Ok(()) => (),
-            //             Err(err) => return Err(GameErr::Frame("Frame End", err)),
-            //         };
-            //         return Err(GameErr::Frame("Frame Draw Entity", err));
-            //     },
-            // }
+            match frame.draw_entity(entry.1.as_ref(), self.matrix_data.as_ref()) {
+                Ok(()) => (),
+                Err(err) => {
+                    match frame.end() {
+                        Ok(_) => (),
+                        Err(err) => return Err(GameErr::Frame("Frame End", err)),
+                    }
+                    return Err(GameErr::Frame("Frame Draw Entity", err))
+                },
+            };
         }
         match frame.end() {
             Ok(renderers) => Ok(renderers),

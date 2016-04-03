@@ -5,13 +5,12 @@ use glium::{Surface, DisplayBuild, GliumCreationError, SwapBuffersError};
 use glium::Frame as GliumFrame;
 use std::fmt;
 use std::error::Error;
-use std::sync::{Arc};
 
 use logic::{EntityData};
 
-use graphics2::texture2d::{RendererTex2, RendererTex2Err};
-use graphics2::solid_color::{RendererSolidColor, RendererSolidColorErr};
-use graphics2::vertex_color::{RendererVertexColor, RendererVertexColorErr};
+use graphics2::texture2d::{RendererTex2Err};
+use graphics2::solid_color::{RendererSolidColorErr};
+use graphics2::vertex_color::{RendererVertexColorErr};
 use graphics2::{Renderers, RendererType, MatrixData};
 
 pub struct Frame {
@@ -45,6 +44,7 @@ impl Frame {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererTex2("Self Renderer Texture2d Render", err)),
                     },
+                    RendererType::Empty => return Err(FrameErr::RendererType("RendererType Was Empty")),
                 }
             },
             None => Ok(()),
@@ -65,6 +65,7 @@ pub enum FrameErr {
     RendererTex2(&'static str, RendererTex2Err),
     RendererSolidColor(&'static str, RendererSolidColorErr),
     RendererVertexColor(&'static str, RendererVertexColorErr),
+    RendererType(&'static str),
 }
 
 impl fmt::Display for FrameErr {
@@ -74,6 +75,7 @@ impl fmt::Display for FrameErr {
             FrameErr::RendererTex2(_, ref err) => err.fmt(f),
             FrameErr::RendererSolidColor(_, ref err) => err.fmt(f),
             FrameErr::RendererVertexColor(_, ref err) => err.fmt(f),
+            FrameErr::RendererType(_) => write!(f, "Renderer Type Was Empty"),
         }
     }
 }
@@ -85,6 +87,7 @@ impl Error for FrameErr {
             FrameErr::RendererTex2(_, ref err) => err.description(),
             FrameErr::RendererSolidColor(_, ref err) => err.description(),
             FrameErr::RendererVertexColor(_, ref err) => err.description(),
+            FrameErr::RendererType(_) => "Renderer Type Was Empty",
         }
     }
 }
@@ -122,7 +125,27 @@ impl WindowBuilder {
         }
     }
 
-    pub fn build(mut self) -> Result<(Window, (u32, u32)), WindowErr> {
+    pub fn with_windowed(mut self) -> WindowBuilder {
+        self.windowed = Windowed::Windowed;
+        self
+    }
+
+    pub fn with_borderless(mut self) -> WindowBuilder {
+        self.windowed = Windowed::Borderless;
+        self
+    }
+
+    pub fn with_dimensions(mut self, dimensions: (u32, u32)) -> WindowBuilder {
+        self.dimensions = dimensions;
+        self
+    }
+
+    pub fn with_title(mut self, title: String) -> WindowBuilder {
+        self.title = title;
+        self
+    }
+
+    pub fn build(self) -> Result<(Window, (u32, u32)), WindowErr> {
         let resolution: (u32, u32) = get_primary_monitor().get_dimensions();
         Ok(
             (

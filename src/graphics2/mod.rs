@@ -7,4 +7,4 @@ mod matrix_data;
 
 pub use self::matrix_data::{MatrixData};
 pub use self::renderers::{RendererType, Renderers, RenderersErr};
-pub use self::window::{Window, WindowErr, Frame, FrameErr};
+pub use self::window::{WindowBuilder, Window, WindowErr, Frame, FrameErr};
