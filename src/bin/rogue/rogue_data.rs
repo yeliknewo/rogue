@@ -4,17 +4,15 @@ use std::fmt;
 
 use dorp::{
     EntityData, World, IdManager, Window, SyncData, Renderers, Id, Renderable, Named, Transform,
-    RenderableErr, TransformErr, Map3d
+    RenderableErr, TransformErr, Map3d, Scene
 };
-
-use rogue::{Scene, SceneErr};
 
 pub struct RogueData {
     renderable: Option<Arc<Renderable>>,
     named: Option<Arc<Named>>,
     transform: Option<Arc<Transform>>,
     map_3d: Option<Arc<Map3d<i32>>>,
-    scene: Option<Arc<Scene>>,
+    scene: Option<Arc<Scene<RogueData>>>,
     id: Id,
 }
 
@@ -50,7 +48,7 @@ impl RogueData {
         self
     }
 
-    pub fn with_scene(mut self, scene: Scene) -> RogueData {
+    pub fn with_scene(mut self, scene: Scene<RogueData>) -> RogueData {
         self.scene = Some(Arc::new(scene));
         self
     }
@@ -131,7 +129,7 @@ impl EntityData<RogueData> for RogueData {
 pub enum RogueDataErr {
     Renderable(&'static str, RenderableErr),
     Transform(&'static str, TransformErr),
-    Scene(&'static str, SceneErr),
+    Scene(&'static str, Box<Error>),
     GetMut(&'static str),
 }
 
