@@ -11,7 +11,7 @@ use image::{load_from_memory, ImageError};
 
 use logic::{Id};
 use components::{Renderable};
-use graphics2::{Window, MatrixData};
+use graphics2::{Window, SyncData};
 use graphics2::texture2d::{Vertex, Index, DrawMethod, method_to_parameters, init_vertex};
 
 pub struct RendererTex2 {
@@ -101,7 +101,7 @@ impl RendererTex2 {
         self.draw_parameters.insert(id, method_to_parameters(draw_method));
     }
 
-    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) -> Result<(), RendererTex2Err> {
+    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, sync_data: &SyncData) -> Result<(), RendererTex2Err> {
         let renderable_tex2 = match renderable.get_texture2d() {
             Some(renderable) => renderable,
             None => return Err(RendererTex2Err::Get("Renderable Get Tex2")),
@@ -121,15 +121,15 @@ impl RendererTex2 {
                     Some(texture) => texture,
                     None => return Err(RendererTex2Err::Get("Self Texture Buffers Get")),
                 },
-                perspective: match matrix_data.get_matrix(renderable_tex2.get_perspective_id()) {
+                perspective: match sync_data.get_matrix(renderable_tex2.get_perspective_id()) {
                     Some(perspective) => *perspective,
                     None => return Err(RendererTex2Err::Get("Matrix Data Get Matrix")),
                 },
-                view: match matrix_data.get_matrix(renderable_tex2.get_view_id()) {
+                view: match sync_data.get_matrix(renderable_tex2.get_view_id()) {
                     Some(view) => *view,
                     None => return Err(RendererTex2Err::Get("Matrix Data Get Matrix")),
                 },
-                model: match matrix_data.get_matrix(renderable_tex2.get_model_id()) {
+                model: match sync_data.get_matrix(renderable_tex2.get_model_id()) {
                     Some(model) => *model,
                     None => return Err(RendererTex2Err::Get("Matrix Data Get Matrix")),
                 }

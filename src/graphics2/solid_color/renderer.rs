@@ -8,8 +8,8 @@ use glium;
 
 use components::{Renderable};
 use logic::{Id};
-use graphics2::{MatrixData, Window};
-use graphics2::solid_color::{Vertex, init_vertex, Index};
+use graphics2::{SyncData, Window};
+use graphics2::solid_color::{Vertex, init_vertex, Index, DrawMethod, method_to_parameters};
 
 pub struct RendererSolidColor {
     vertex_buffers: HashMap<Id, VertexBuffer<Vertex>>,
@@ -25,15 +25,12 @@ impl RendererSolidColor {
             #version 140
 
             in vec3 position;
-            in vec2 tex_coord;
+
             uniform mat4 perspective;
             uniform mat4 view;
             uniform mat4 model;
 
-            out vec2 v_tex_coord;
-
             void main() {
-                v_tex_coord = tex_coord;
                 gl_Position = perspective * view * model * vec4(position, 1.0);
             }
         "#;
@@ -41,14 +38,12 @@ impl RendererSolidColor {
         let fragment_shader_src = r#"
             #version 140
 
-            in vec2 v_tex_coord;
-
             out vec4 color;
 
-            uniform sampler2D tex;
+            uniform vec4 u_color;
 
             void main() {
-                color = texture(tex, v_tex_coord);
+                color = u_color;
             }
         "#;
         Ok(
@@ -64,7 +59,27 @@ impl RendererSolidColor {
         )
     }
 
-    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) -> Result<(), RendererSolidColorErr> {
+    pub fn set_vertices(&mut self, id: Id, window: &mut Window, vertices: Vec<Vertex>) -> Result<(), RendererSolidColorErr> {
+        self.vertex_buffers.insert(id, match VertexBuffer::new(window.get_facade(), &vertices) {
+            Ok(buffer) => buffer,
+            Err(err) => return Err(RendererSolidColorErr::VertexBufferCreation("VertexBuffer New", err)),
+        });
+        Ok(())
+    }
+
+    pub fn set_indices(&mut self, id: Id, window: &mut Window, indices: Vec<Index>) -> Result<(), RendererSolidColorErr> {
+        self.index_buffers.insert(id, match IndexBuffer::new(window.get_facade(), glium::index::PrimitiveType::TrianglesList, &indices) {
+            Ok(buffer) => buffer,
+            Err(err) => return Err(RendererSolidColorErr::IndexBufferCreation("IndexBuffer New", err)),
+        });
+        Ok(())
+    }
+
+    pub fn set_draw_method(&mut self, id: Id, draw_method: DrawMethod) {
+        self.draw_parameters.insert(id, method_to_parameters(draw_method));
+    }
+
+    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, sync_data: &SyncData) -> Result<(), RendererSolidColorErr> {
         let renderable_solid = match renderable.get_solid_color() {
             Some(renderable) => renderable,
             None => return Err(RendererSolidColorErr::Get("Renderable Get Solid Color")),
@@ -80,7 +95,22 @@ impl RendererSolidColor {
             },
             &self.program,
             &uniform!(
-
+                u_color: match sync_data.get_vec4(renderable_solid.get_color_id()) {
+                    Some(color) => *color,
+                    None => return Err(RendererSolidColorErr::Get("Sync Data Get Vec4")),
+                },
+                perspective: match sync_data.get_matrix(renderable_solid.get_perspective_id()) {
+                    Some(perspective) => *perspective,
+                    None => return Err(RendererSolidColorErr::Get("Matrix Data Get Matrix")),
+                },
+                view: match sync_data.get_matrix(renderable_solid.get_view_id()) {
+                    Some(view) => *view,
+                    None => return Err(RendererSolidColorErr::Get("Matrix Data Get Matrix")),
+                },
+                model: match sync_data.get_matrix(renderable_solid.get_model_id()) {
+                    Some(model) => *model,
+                    None => return Err(RendererSolidColorErr::Get("Matrix Data Get Matrix")),
+                }
             ),
             match self.draw_parameters.get(&renderable_solid.get_draw_method_id()) {
                 Some(dp) => dp,

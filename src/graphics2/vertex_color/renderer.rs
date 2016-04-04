@@ -7,8 +7,8 @@ use glium::{Surface, VertexBuffer, IndexBuffer, DrawParameters, Program, Program
 use glium;
 
 use components::{Renderable};
-use graphics2::{MatrixData, Window};
-use graphics2::vertex_color::{Vertex, init_vertex, Index};
+use graphics2::{SyncData, Window};
+use graphics2::vertex_color::{Vertex, init_vertex, Index, DrawMethod, method_to_parameters};
 use logic::{Id};
 
 pub struct RendererVertexColor {
@@ -25,15 +25,15 @@ impl RendererVertexColor {
             #version 140
 
             in vec3 position;
-            in vec2 tex_coord;
+            in vec4 color;
             uniform mat4 perspective;
             uniform mat4 view;
             uniform mat4 model;
 
-            out vec2 v_tex_coord;
+            out vec4 v_color;
 
             void main() {
-                v_tex_coord = tex_coord;
+                v_color = color;
                 gl_Position = perspective * view * model * vec4(position, 1.0);
             }
         "#;
@@ -41,14 +41,12 @@ impl RendererVertexColor {
         let fragment_shader_src = r#"
             #version 140
 
-            in vec2 v_tex_coord;
+            in vec4 v_color;
 
             out vec4 color;
 
-            uniform sampler2D tex;
-
             void main() {
-                color = texture(tex, v_tex_coord);
+                color = v_color;
             }
         "#;
         Ok(
@@ -64,7 +62,27 @@ impl RendererVertexColor {
         )
     }
 
-    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, matrix_data: &MatrixData) -> Result<(), RendererVertexColorErr> {
+    pub fn set_vertices(&mut self, id: Id, window: &mut Window, vertices: Vec<Vertex>) -> Result<(), RendererVertexColorErr> {
+        self.vertex_buffers.insert(id, match VertexBuffer::new(window.get_facade(), &vertices) {
+            Ok(buffer) => buffer,
+            Err(err) => return Err(RendererVertexColorErr::VertexBufferCreation("Vertex Buffer New", err)),
+        });
+        Ok(())
+    }
+
+    pub fn set_indices(&mut self, id: Id, window: &mut Window, indices: Vec<Index>) -> Result<(), RendererVertexColorErr> {
+        self.index_buffers.insert(id, match IndexBuffer::new(window.get_facade(), glium::index::PrimitiveType::TrianglesList, &indices) {
+            Ok(buffer) => buffer,
+            Err(err) => return Err(RendererVertexColorErr::IndexBufferCreation("Index Buffer New", err)),
+        });
+        Ok(())
+    }
+
+    pub fn set_draw_method(&mut self, id: Id, draw_method: DrawMethod) {
+    self.draw_parameters.insert(id, method_to_parameters(draw_method));
+}
+
+    pub fn render(&mut self, frame: &mut GliumFrame, renderable: Arc<Renderable>, sync_data: &SyncData) -> Result<(), RendererVertexColorErr> {
         let renderable_vertex = match renderable.get_vertex_color() {
             Some(vertex) => vertex,
             None => return Err(RendererVertexColorErr::Get("Renderable Get Vertex Color")),
@@ -80,7 +98,18 @@ impl RendererVertexColor {
             },
             &self.program,
             &uniform!(
-
+                perspective: match sync_data.get_matrix(renderable_vertex.get_perspective_id()) {
+                    Some(perspective) => *perspective,
+                    None => return Err(RendererVertexColorErr::Get("Matrix Data Get Matrix")),
+                },
+                view: match sync_data.get_matrix(renderable_vertex.get_view_id()) {
+                    Some(view) => *view,
+                    None => return Err(RendererVertexColorErr::Get("Matrix Data Get Matrix")),
+                },
+                model: match sync_data.get_matrix(renderable_vertex.get_model_id()) {
+                    Some(model) => *model,
+                    None => return Err(RendererVertexColorErr::Get("Matrix Data Get Matrix")),
+                }
             ),
             match self.draw_parameters.get(&renderable_vertex.get_draw_method_id()) {
                 Some(dp) => dp,

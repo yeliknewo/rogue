@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fmt;
 
 use dorp::{
-    EntityData, World, IdManager, Window, MatrixData, Renderers, Id, Renderable, Named, Transform,
+    EntityData, World, IdManager, Window, SyncData, Renderers, Id, Renderable, Named, Transform,
     RenderableErr, TransformErr
 };
 
@@ -73,7 +73,7 @@ impl EntityData<Iso2Data> for Iso2Data {
         Ok(())
     }
 
-    fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData, renderers: &mut Renderers) -> Result<(), Box<Error>> {
+    fn render(&mut self, window: &mut Window, sync_data: &mut SyncData, renderers: &mut Renderers) -> Result<(), Box<Error>> {
         match self.renderable.as_mut() {
             Some(renderable) => {
                 match Arc::get_mut(renderable) {
@@ -86,6 +86,10 @@ impl EntityData<Iso2Data> for Iso2Data {
                                 }
                             },
                             None => (),
+                        };
+                        match renderable.render(window, sync_data, renderers) {
+                            Ok(()) => (),
+                            Err(err) => return Err(Box::new(Iso2DataErr::Renderable("Renderable Render", err))),
                         }
                     },
                     None => return Err(Box::new(Iso2DataErr::GetMut("Arc Get Mut Renderable"))),

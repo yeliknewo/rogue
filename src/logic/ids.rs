@@ -35,6 +35,7 @@ pub enum IdType {
     Texture,
     DrawMethod,
     Matrix,
+    Color,
 }
 
 pub struct IdManager {

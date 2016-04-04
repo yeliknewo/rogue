@@ -4,7 +4,7 @@ use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
 use math::{Mat4};
-use graphics2::{Window, WindowErr, MatrixData, Renderers};
+use graphics2::{Window, WindowErr, SyncData, Renderers};
 use graphics2::texture2d::{Vertex, Index, DrawMethod, RendererTex2Err};
 
 struct Changes {
@@ -84,7 +84,7 @@ impl RenderableTex2 {
         }
     }
 
-    pub fn render(&mut self, window: &mut Window, matrix_data: &mut MatrixData, renderers: &mut Renderers) -> Result<(), RenderableTex2Err> {
+    pub fn render(&mut self, window: &mut Window, sync_data: &mut SyncData, renderers: &mut Renderers) -> Result<(), RenderableTex2Err> {
         if self.changes.dirty_render {
             match self.changes.vertices.clone() {
                 Some(vertices) => {
@@ -121,19 +121,19 @@ impl RenderableTex2 {
             }
             match self.changes.perspective.clone() {
                 Some(perspective) => {
-                    matrix_data.set_matrix(self.perspective_id, perspective.0, perspective.1);
+                    sync_data.set_matrix(self.perspective_id, perspective.0, perspective.1);
                 },
                 None => (),
             }
             match self.changes.view.clone() {
                 Some(view) => {
-                    matrix_data.set_matrix(self.view_id, view.0, view.1);
+                    sync_data.set_matrix(self.view_id, view.0, view.1);
                 },
                 None => (),
             }
             match self.changes.model.clone() {
                 Some(model) => {
-                    matrix_data.set_matrix(self.model_id, model.0, model.1);
+                    sync_data.set_matrix(self.model_id, model.0, model.1);
                 },
                 None => (),
             }

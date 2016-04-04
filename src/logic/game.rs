@@ -8,11 +8,11 @@ use glium::glutin::Event as WindowEvent;
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
 use logic::{World, WorldErr, EntityData, IdManager};
 use math::{Vec2};
-use graphics2::{Window, FrameErr, MatrixData, Renderers, RenderersErr};
+use graphics2::{Window, FrameErr, SyncData, Renderers, RenderersErr};
 
 pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
-    matrix_data: Arc<MatrixData>,
+    sync_data: Arc<SyncData>,
     thread_pool: Pool,
 }
 
@@ -23,7 +23,7 @@ impl<T: EntityData<T>> Game<T> {
         let display = Arc::new(Display::new(resolution));
         Game {
             world: Arc::new(World::new(keyboard.clone(), mouse.clone(), display.clone())),
-            matrix_data: Arc::new(MatrixData::new()),
+            sync_data: Arc::new(SyncData::new()),
             thread_pool: Pool::new(thread_count),
         }
     }
@@ -210,7 +210,7 @@ impl<T: EntityData<T>> Game<T> {
             match match Arc::get_mut(entity) {
                     Some(entity) => entity,
                     None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
-                }.render(window, match Arc::get_mut(&mut self.matrix_data) {
+                }.render(window, match Arc::get_mut(&mut self.sync_data) {
                     Some(matrix_data) => matrix_data,
                     None => return Err(GameErr::GetMut("Arc Get Mut Self Matrix Data")),
                 }, &mut renderers) {
@@ -233,7 +233,7 @@ impl<T: EntityData<T>> Game<T> {
                 return Err(GameErr::World("World Get Mut Entity Data", err))
             },
         }.iter() {
-            match frame.draw_entity(entry.1.as_ref(), self.matrix_data.as_ref()) {
+            match frame.draw_entity(entry.1.as_ref(), self.sync_data.as_ref()) {
                 Ok(()) => (),
                 Err(err) => {
                     match frame.end() {

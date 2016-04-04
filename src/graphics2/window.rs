@@ -11,7 +11,7 @@ use logic::{EntityData};
 use graphics2::texture2d::{RendererTex2Err};
 use graphics2::solid_color::{RendererSolidColorErr};
 use graphics2::vertex_color::{RendererVertexColorErr};
-use graphics2::{Renderers, RendererType, MatrixData};
+use graphics2::{Renderers, RendererType, SyncData};
 
 pub struct Frame {
     frame: GliumFrame,
@@ -28,19 +28,19 @@ impl Frame {
         }
     }
 
-    pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, matrix_data: &MatrixData) -> Result<(), FrameErr> {
+    pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, sync_data: &SyncData) -> Result<(), FrameErr> {
         match entity.get_renderable() {
             Some(renderable) => {
                 match renderable.get_renderer_type() {
-                    RendererType::SolidColor => match self.renderers.get_mut_solid_color().render(&mut self.frame, renderable, matrix_data) {
+                    RendererType::SolidColor => match self.renderers.get_mut_solid_color().render(&mut self.frame, renderable, sync_data) {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererSolidColor("Self RendererSolidColor Render", err)),
                     },
-                    RendererType::VertexColor => match self.renderers.get_mut_vertex_color().render(&mut self.frame, renderable, matrix_data) {
+                    RendererType::VertexColor => match self.renderers.get_mut_vertex_color().render(&mut self.frame, renderable, sync_data) {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererVertexColor("Self RendererVertexColor Render", err)),
                     },
-                    RendererType::Texture2d => match self.renderers.get_mut_texture2d().render(&mut self.frame, renderable, matrix_data) {
+                    RendererType::Texture2d => match self.renderers.get_mut_texture2d().render(&mut self.frame, renderable, sync_data) {
                         Ok(()) => Ok(()),
                         Err(err) => Err(FrameErr::RendererTex2("Self Renderer Texture2d Render", err)),
                     },
