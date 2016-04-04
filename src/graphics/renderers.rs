@@ -1,10 +1,10 @@
 use std::fmt;
 use std::error::Error;
 
-use graphics2::texture2d::{RendererTex2, RendererTex2Err};
-use graphics2::solid_color::{RendererSolidColor, RendererSolidColorErr};
-use graphics2::vertex_color::{RendererVertexColor, RendererVertexColorErr};
-use graphics2::{Window};
+use graphics::texture2d::{RendererTex2, RendererTex2Err};
+use graphics::solid_color::{RendererSolidColor, RendererSolidColorErr};
+use graphics::vertex_color::{RendererVertexColor, RendererVertexColorErr};
+use graphics::{Window};
 
 pub struct Renderers {
     renderer_solid_color: RendererSolidColor,

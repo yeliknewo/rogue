@@ -4,8 +4,8 @@ use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
 use math::{Mat4};
-use graphics2::{Window, WindowErr, SyncData, Renderers};
-use graphics2::texture2d::{Vertex, Index, DrawMethod, RendererTex2Err};
+use graphics::{Window, WindowErr, SyncData, Renderers};
+use graphics::texture2d::{Vertex, Index, DrawMethod, RendererTex2Err};
 
 struct Changes {
     vertices: Option<Vec<Vertex>>,

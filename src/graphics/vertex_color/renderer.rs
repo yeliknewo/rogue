@@ -7,8 +7,8 @@ use glium::{Surface, VertexBuffer, IndexBuffer, DrawParameters, Program, Program
 use glium;
 
 use components::{Renderable};
-use graphics2::{SyncData, Window};
-use graphics2::vertex_color::{Vertex, init_vertex, Index, DrawMethod, method_to_parameters};
+use graphics::{SyncData, Window};
+use graphics::vertex_color::{Vertex, init_vertex, Index, DrawMethod, method_to_parameters};
 use logic::{Id};
 
 pub struct RendererVertexColor {

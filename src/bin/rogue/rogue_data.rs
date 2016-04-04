@@ -4,7 +4,7 @@ use std::fmt;
 
 use dorp::{
     EntityData, World, IdManager, Window, SyncData, Renderers, Id, Renderable, Named, Transform,
-    RenderableErr, TransformErr, TileMap
+    RenderableErr, TransformErr, Map3d
 };
 
 use rogue::{Scene, SceneErr};
@@ -13,7 +13,7 @@ pub struct RogueData {
     renderable: Option<Arc<Renderable>>,
     named: Option<Arc<Named>>,
     transform: Option<Arc<Transform>>,
-    tile_map: Option<Arc<TileMap>>,
+    map_3d: Option<Arc<Map3d<i32>>>,
     scene: Option<Arc<Scene>>,
     id: Id,
 }
@@ -24,7 +24,7 @@ impl RogueData {
             renderable: None,
             named: None,
             transform: None,
-            tile_map: None,
+            map_3d: None,
             scene: None,
             id: id,
         }
@@ -45,8 +45,8 @@ impl RogueData {
         self
     }
 
-    pub fn with_tile_map(mut self, tile_map: TileMap) -> RogueData {
-        self.tile_map = Some(Arc::new(tile_map));
+    pub fn with_map_3d(mut self, map_3d: Map3d<i32>) -> RogueData {
+        self.map_3d = Some(Arc::new(map_3d));
         self
     }
 

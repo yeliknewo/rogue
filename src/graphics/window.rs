@@ -8,10 +8,10 @@ use std::error::Error;
 
 use logic::{EntityData};
 
-use graphics2::texture2d::{RendererTex2Err};
-use graphics2::solid_color::{RendererSolidColorErr};
-use graphics2::vertex_color::{RendererVertexColorErr};
-use graphics2::{Renderers, RendererType, SyncData};
+use graphics::texture2d::{RendererTex2Err};
+use graphics::solid_color::{RendererSolidColorErr};
+use graphics::vertex_color::{RendererVertexColorErr};
+use graphics::{Renderers, RendererType, SyncData};
 
 pub struct Frame {
     frame: GliumFrame,

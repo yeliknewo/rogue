@@ -1,16 +1,17 @@
 use std::collections::{HashMap};
+use std::hash::{Hash};
 
-use dorp::{Id};
+use logic::{Id};
 
-pub struct TileMap {
-    tiles: HashMap<i32, HashMap<i32, Id>>,
+pub struct Map2d<T: Hash + Eq + Copy> {
+    tiles: HashMap<T, HashMap<T, Id>>,
     dirty_tiles: bool,
     ticks: i32,
 }
 
-impl TileMap {
-    pub fn new() -> TileMap {
-        TileMap {
+impl<T: Hash + Eq + Copy> Map2d<T> {
+    pub fn new() -> Map2d<T> {
+        Map2d {
             tiles: HashMap::new(),
             dirty_tiles: false,
             ticks: 0,
@@ -27,7 +28,7 @@ impl TileMap {
         }
     }
 
-    pub fn add_tile(&mut self, x: i32, y: i32, id: Id) {
+    pub fn add_tile(&mut self, x: T, y: T, id: Id) {
         match self.tiles.remove(&y) {
             Some(mut row) => {
                 row.insert(x, id);
@@ -41,7 +42,7 @@ impl TileMap {
         }
     }
 
-    pub fn get_tile(&self, x:i32, y: i32) -> Option<Id> {
+    pub fn get_tile(&self, x: T, y: T) -> Option<Id> {
         match self.tiles.get(&y) {
             Some(row) => match row.get(&x) {
                 Some(id) => Some(id.clone()),
@@ -51,7 +52,7 @@ impl TileMap {
         }
     }
 
-    pub fn get_tiles(&self) -> &HashMap<i32, HashMap<i32, Id>> {
+    pub fn get_tiles(&self) -> &HashMap<T, HashMap<T, Id>> {
         &self.tiles
     }
 

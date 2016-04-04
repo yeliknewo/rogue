@@ -8,7 +8,7 @@ use glium::glutin::Event as WindowEvent;
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
 use logic::{World, WorldErr, EntityData, IdManager};
 use math::{Vec2};
-use graphics2::{Window, FrameErr, SyncData, Renderers, RenderersErr};
+use graphics::{Window, FrameErr, SyncData, Renderers, RenderersErr};
 
 pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,

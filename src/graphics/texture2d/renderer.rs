@@ -11,8 +11,8 @@ use image::{load_from_memory, ImageError};
 
 use logic::{Id};
 use components::{Renderable};
-use graphics2::{Window, SyncData};
-use graphics2::texture2d::{Vertex, Index, DrawMethod, method_to_parameters, init_vertex};
+use graphics::{Window, SyncData};
+use graphics::texture2d::{Vertex, Index, DrawMethod, method_to_parameters, init_vertex};
 
 pub struct RendererTex2 {
     vertex_buffers: HashMap<Id, VertexBuffer<Vertex>>,

@@ -3,8 +3,8 @@ use std::fmt;
 use std::error::Error;
 
 use logic::{Id, IdManager, IdType};
-use graphics2::{Window, SyncData, Renderers};
-use graphics2::vertex_color::{Vertex, Index, DrawMethod, RendererVertexColorErr};
+use graphics::{Window, SyncData, Renderers};
+use graphics::vertex_color::{Vertex, Index, DrawMethod, RendererVertexColorErr};
 use math::{Mat4};
 
 struct Changes {

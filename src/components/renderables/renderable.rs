@@ -2,7 +2,7 @@ use std::error::Error;
 use std::fmt;
 use std::sync::{Arc};
 
-use graphics2::{RendererType, Window, SyncData, Renderers};
+use graphics::{RendererType, Window, SyncData, Renderers};
 use components::renderables::{RenderableTex2, RenderableTex2Err, RenderableVertexColor, RenderableVertexColorErr, RenderableSolidColor, RenderableSolidColorErr};
 use math::{Mat4};
 

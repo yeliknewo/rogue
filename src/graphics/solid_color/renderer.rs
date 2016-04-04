@@ -8,8 +8,8 @@ use glium;
 
 use components::{Renderable};
 use logic::{Id};
-use graphics2::{SyncData, Window};
-use graphics2::solid_color::{Vertex, init_vertex, Index, DrawMethod, method_to_parameters};
+use graphics::{SyncData, Window};
+use graphics::solid_color::{Vertex, init_vertex, Index, DrawMethod, method_to_parameters};
 
 pub struct RendererSolidColor {
     vertex_buffers: HashMap<Id, VertexBuffer<Vertex>>,

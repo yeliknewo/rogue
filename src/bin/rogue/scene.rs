@@ -4,9 +4,9 @@ use std::sync::{Arc};
 
 use dorp::{
     Renderable, RenderableErr, Transform, TransformErr, WorldErr, NamedErr, IdManager, World, Id,
-    Mat4, IdType, Vec3, RenderableVertexColor, TileMap, Named, Vec4, DEG_TO_RAD
+    Mat4, IdType, Vec3, RenderableVertexColor, Map3d, Named, Vec4, DEG_TO_RAD
 };
-use dorp::graphics2::vertex_color;
+use dorp::graphics::vertex_color;
 
 use rogue::{RogueData};
 
@@ -22,7 +22,7 @@ impl Scene {
         {
             let id = Id::new(manager, IdType::Entity);
 
-            let tile_map = TileMap::new();
+            let map_3d = Map3d::<i32>::new();
 
             let named = match Named::new("TileMap", id, world) {
                 Ok(named) => named,
@@ -30,8 +30,8 @@ impl Scene {
             };
 
             match world.add_entity(RogueData::new(id)
-                .with_tile_map(
-                    tile_map
+                .with_map_3d(
+                    map_3d
                 )
                 .with_named(
                     named
@@ -50,106 +50,111 @@ impl Scene {
                     vertex_color::Vertex::new([1.0, 1.0, 0.0], [0.0, 0.0, 1.0, 1.0]),
                     vertex_color::Vertex::new([0.0, 1.0, 0.0], [1.0, 1.0, 1.0, 1.0]),
                 ));
-                 vertex_color.set_indices(vec!(
-                     0, 1, 2,
-                     2, 3, 0,
+                vertex_color.set_indices(vec!(
+                    0, 1, 2,
+                    2, 3, 0,
 
-                     0, 4, 5,
-                     5, 1, 0,
+                    5, 4, 0,
+                    0, 1, 5,
 
-                     1, 2, 6,
-                     6, 5, 1,
+                    1, 2, 6,
+                    6, 5, 1,
 
-                     3, 7, 6,
-                     6, 2, 3,
+                    3, 7, 6,
+                    6, 2, 3,
 
-                     0, 4, 7,
-                     7, 3, 0,
+                    0, 4, 7,
+                    7, 3, 0,
 
-                     4, 5, 6,
-                     6, 7, 4
+                    4, 5, 6,
+                    6, 7, 4
                  ));
                  vertex_color.set_draw_method(vertex_color::DrawMethod::Both(vertex_color::DepthTestMethod::IfLess, vertex_color::CullingMethod::CounterClockwise));
                  vertex_color.set_perspective(Mat4::orthographic(0.1, 100.0, 90.0, world.get_aspect_ratio()));
-                 vertex_color.set_view(Mat4::x_rotation(30.0 * DEG_TO_RAD) * Mat4::y_rotation(-30.0 * DEG_TO_RAD));
+                 vertex_color.set_view(Mat4::x_rotation(45.0 * DEG_TO_RAD) * Mat4::y_rotation(45.0 * DEG_TO_RAD));
                  vertex_color.set_model(Mat4::identity());
                 Arc::new(vertex_color)
             };
             {
                 let mut colors : Vec<Vec4> = vec!();
-                let x0: i32 = -10;
-                let x1 = 11;
-                let y0: i32 = -10;
-                let y1 = 11;
-                let scale = 0.1;
-                let width = x1 - x0;
-                let height = y1 - y0;
-                for y in y0..y1 {
-                    for x in x0..x1 {
-                        colors.push(Vec4::from([(x + y).abs() as f32 % 0.9, (x).abs() as f32 % 0.9, (y).abs() as f32 % 0.9, 1.0]))
+                let p0 = Vec3::from([-10.0, -1.0, -10.0]);
+                let p1 = Vec3::from([10.0, 1.0, 10.0]);
+                let scale = {
+                    let b = p1 - p0;
+                    Vec3::from([1.0 / b[0], 1.0 / b[1], 1.0 / b[2]])
+                };
+                let width = (p1[0] - p0[0]) as i32;
+                let height = (p1[1] - p0[1]) as i32;
+                let depth = (p1[2] - p0[2]) as i32;
+                for z in p0[2] as i32..p1[2] as i32 {
+                    for y in p0[1] as i32..p1[1] as i32 {
+                        for x in p0[0] as i32..p1[0] as i32 {
+                            colors.push(Vec4::from([(x).abs() as f32 % 0.9, (y).abs() as f32 % 0.9, (z).abs() as f32 % 0.9, 1.0]))
+                        }
                     }
                 }
-                for y in 0..height - 1 {
-                    for x in 0..width - 1 {
-                        let id = Id::new(manager, IdType::Entity);
+                for z in 0..depth - 1 {
+                    for y in 0..height - 1 {
+                        for x in 0..width - 1 {
+                            let id = Id::new(manager, IdType::Entity);
 
-                        let mut renderable = Renderable::new();
-                        {
-                            let mut vertex_color = RenderableVertexColor::new_from(vertex_color.clone());
-                            vertex_color.set_vertex_id(Id::new(manager, IdType::Vertex));
-                            vertex_color.set_vertices(vec!(
-                                vertex_color::Vertex::new([0.0, 0.0, 0.0], match colors.get(((y + 0) * width + (x + 0)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([0.0, 1.0, 0.0], match colors.get(((y + 1) * width + (x + 0)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([1.0, 1.0, 0.0], match colors.get(((y + 1) * width + (x + 1)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([1.0, 0.0, 0.0], match colors.get(((y + 0) * width + (x + 1)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([0.0, 0.0, 1.0], match colors.get(((y + 0) * width + (x + 0)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([0.0, 1.0, 1.0], match colors.get(((y + 1) * width + (x + 0)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([1.0, 1.0, 1.0], match colors.get(((y + 1) * width + (x + 1)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                                vertex_color::Vertex::new([1.0, 0.0, 1.0], match colors.get(((y + 0) * width + (x + 1)) as usize) {
-                                    Some(color) => color.get_vals(),
-                                    None => return Err(SceneErr::Get("Colors Get")),
-                                }),
-                            ));
-                            vertex_color.set_model_id(Id::new(manager, IdType::Matrix));
-                            vertex_color.set_model(Mat4::identity());
-                            renderable.set_vertex_color(vertex_color);
-                        }
+                            let mut renderable = Renderable::new();
+                            {
+                                let mut vertex_color = RenderableVertexColor::new_from(vertex_color.clone());
+                                vertex_color.set_vertex_id(Id::new(manager, IdType::Vertex));
+                                vertex_color.set_vertices(vec!(
+                                    vertex_color::Vertex::new([0.0, 0.0, 0.0], match colors.get(((z + 0) * height * width + (y + 0) * width + (x + 0)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([0.0, 1.0, 0.0], match colors.get(((z + 0) * height * width + (y + 1) * width + (x + 0)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([1.0, 1.0, 0.0], match colors.get(((z + 0) * height * width + (y + 1) * width + (x + 1)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([1.0, 0.0, 0.0], match colors.get(((z + 0) * height * width + (y + 0) * width + (x + 1)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([0.0, 0.0, 1.0], match colors.get(((z + 1) * height * width + (y + 0) * width + (x + 0)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([0.0, 1.0, 1.0], match colors.get(((z + 1) * height * width + (y + 1) * width + (x + 0)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([1.0, 1.0, 1.0], match colors.get(((z + 1) * height * width + (y + 1) * width + (x + 1)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                    vertex_color::Vertex::new([1.0, 0.0, 1.0], match colors.get(((z + 1) * height * width + (y + 0) * width + (x + 1)) as usize) {
+                                        Some(color) => color.get_vals(),
+                                        None => return Err(SceneErr::Get("Colors Get")),
+                                    }),
+                                ));
+                                vertex_color.set_model_id(Id::new(manager, IdType::Matrix));
+                                vertex_color.set_model(Mat4::identity());
+                                renderable.set_vertex_color(vertex_color);
+                            }
 
-                        let mut transform  = Transform::new();
-                        let sx = x as f32 * scale;
-                        let sy = y as f32 * scale;
-                        let sx0 = (x + x0) as f32 * scale;
-                        let sy0 = (y + y0) as f32 * scale;
-                        transform.set_position(Vec3::from([sx0, sy0, 0.0]));
-                        transform.set_scalation(Vec3::from([scale, scale, scale]));
+                            let mut transform  = Transform::new();
+                            let sx0 = (x as f32 + p0[0]) * scale[0];
+                            let sy0 = (y as f32 + p0[1]) * scale[1];
+                            let sz0 = (z as f32 + p0[2]) * scale[2];
+                            transform.set_position(Vec3::from([sx0, sy0, sz0]));
+                            transform.set_scalation(scale);
 
-                        match world.add_entity(RogueData::new(id)
-                            .with_renderable(renderable)
-                            .with_transform(transform)
-                        ) {
-                            Ok(()) => (),
-                            Err(err) => return Err(SceneErr::World("World Add Entity", err)),
+                            match world.add_entity(RogueData::new(id)
+                                .with_renderable(renderable)
+                                .with_transform(transform)
+                            ) {
+                                Ok(()) => (),
+                                Err(err) => return Err(SceneErr::World("World Add Entity", err)),
+                            }
                         }
                     }
                 }
