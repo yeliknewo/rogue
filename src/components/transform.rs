@@ -21,11 +21,15 @@ impl Transform {
         }
     }
 
-    pub fn render(&mut self, renderable: &mut Renderable) {
+    pub fn render(&mut self, renderable: &mut Renderable) -> Result<(), TransformErr> {
         if self.dirty_render {
-            renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position));
+            match renderable.set_model(Mat4::scalation_from_vec3(self.scalation) * Mat4::rotation_from_vec3(self.rotation) * Mat4::translation_from_vec3(self.position)) {
+                Ok(()) => (),
+                Err(err) => return Err(TransformErr::Renderable("Renderable Set Model", err)),
+            }
             self.dirty_render = false;
         }
+        Ok(())
     }
 
     pub fn set_position(&mut self, pos: Vec3) {

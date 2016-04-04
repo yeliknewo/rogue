@@ -17,5 +17,5 @@ pub use self::input::{Keyboard, Mouse, Display};
 pub use self::logic::{IdManager, Game, World, WorldErr, Id, IdType, EntityData};
 //pub use self::graphics::{Window, WindowArgs, DrawMethod, CullingMethod, DepthTestMethod, Vertex, Index, MatrixData, ProgramPreset};
 pub use self::graphics2::{WindowBuilder, Window, SyncData, Renderers, RendererType};
-pub use self::components::{Transform, TransformErr, Renderable, RenderableErr, RenderableTex2, RenderableSolidColor, RenderableVertexColor, Named, NamedErr};
+pub use self::components::{Transform, TransformErr, Renderable, RenderableErr, RenderableTex2, RenderableSolidColor, RenderableVertexColor, Named, NamedErr, TileMap};
 pub use self::err::{Error};

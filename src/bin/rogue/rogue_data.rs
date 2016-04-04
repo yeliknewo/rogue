@@ -4,57 +4,64 @@ use std::fmt;
 
 use dorp::{
     EntityData, World, IdManager, Window, SyncData, Renderers, Id, Renderable, Named, Transform,
-    RenderableErr, TransformErr
+    RenderableErr, TransformErr, TileMap
 };
 
-use iso2::{Scene, SceneErr};
+use rogue::{Scene, SceneErr};
 
-pub struct Iso2Data {
+pub struct RogueData {
     renderable: Option<Arc<Renderable>>,
     named: Option<Arc<Named>>,
     transform: Option<Arc<Transform>>,
+    tile_map: Option<Arc<TileMap>>,
     scene: Option<Arc<Scene>>,
     id: Id,
 }
 
-impl Iso2Data {
-    pub fn new(id: Id) -> Iso2Data {
-        Iso2Data {
+impl RogueData {
+    pub fn new(id: Id) -> RogueData {
+        RogueData {
             renderable: None,
             named: None,
             transform: None,
+            tile_map: None,
             scene: None,
             id: id,
         }
     }
 
-    pub fn with_renderable(mut self, renderable: Renderable) -> Iso2Data {
+    pub fn with_renderable(mut self, renderable: Renderable) -> RogueData {
         self.renderable = Some(Arc::new(renderable));
         self
     }
 
-    pub fn with_named(mut self, named: Named) -> Iso2Data {
+    pub fn with_named(mut self, named: Named) -> RogueData {
         self.named = Some(Arc::new(named));
         self
     }
 
-    pub fn with_transform(mut self, transform: Transform) -> Iso2Data {
+    pub fn with_transform(mut self, transform: Transform) -> RogueData {
         self.transform = Some(Arc::new(transform));
         self
     }
 
-    pub fn with_scene(mut self, scene: Scene) -> Iso2Data {
+    pub fn with_tile_map(mut self, tile_map: TileMap) -> RogueData {
+        self.tile_map = Some(Arc::new(tile_map));
+        self
+    }
+
+    pub fn with_scene(mut self, scene: Scene) -> RogueData {
         self.scene = Some(Arc::new(scene));
         self
     }
 }
 
-impl EntityData<Iso2Data> for Iso2Data {
-    fn tick(&self, delta_time: Arc<f64>, world: Arc<World<Iso2Data>>) -> Result<(), Box<Error>> {
+impl EntityData<RogueData> for RogueData {
+    fn tick(&self, delta_time: Arc<f64>, world: Arc<World<RogueData>>) -> Result<(), Box<Error>> {
         Ok(())
     }
 
-    fn tick_mut(&mut self, manager: &mut IdManager, world: &mut World<Iso2Data>) -> Result<(), Box<Error>> {
+    fn tick_mut(&mut self, manager: &mut IdManager, world: &mut World<RogueData>) -> Result<(), Box<Error>> {
         let id = self.get_id();
         match self.scene.as_mut() {
             Some(scene) => {
@@ -62,10 +69,10 @@ impl EntityData<Iso2Data> for Iso2Data {
                     Some(scene) => {
                         match scene.tick_mut(id, manager, world) {
                             Ok(()) => (),
-                            Err(err) => return Err(Box::new(Iso2DataErr::Scene("Scene Tick Mut", err))),
+                            Err(err) => return Err(Box::new(RogueDataErr::Scene("Scene Tick Mut", err))),
                         }
                     },
-                    None => return Err(Box::new(Iso2DataErr::GetMut("Arc Get Mut Scene"))),
+                    None => return Err(Box::new(RogueDataErr::GetMut("Arc Get Mut Scene"))),
                 }
             },
             None => (),
@@ -83,19 +90,19 @@ impl EntityData<Iso2Data> for Iso2Data {
                                 match Arc::get_mut(transform) {
                                     Some(transform) => match transform.render(renderable) {
                                         Ok(()) => (),
-                                        Err(err) => return Err(Box::new(Iso2DataErr::Transform("Transform Render", err))),
+                                        Err(err) => return Err(Box::new(RogueDataErr::Transform("Transform Render", err))),
                                     },
-                                    None => return Err(Box::new(Iso2DataErr::GetMut("Arc Get Mut Transform"))),
+                                    None => return Err(Box::new(RogueDataErr::GetMut("Arc Get Mut Transform"))),
                                 }
                             },
                             None => (),
                         };
                         match renderable.render(window, sync_data, renderers) {
                             Ok(()) => (),
-                            Err(err) => return Err(Box::new(Iso2DataErr::Renderable("Renderable Render", err))),
+                            Err(err) => return Err(Box::new(RogueDataErr::Renderable("Renderable Render", err))),
                         }
                     },
-                    None => return Err(Box::new(Iso2DataErr::GetMut("Arc Get Mut Renderable"))),
+                    None => return Err(Box::new(RogueDataErr::GetMut("Arc Get Mut Renderable"))),
                 }
             },
             None => (),
@@ -121,31 +128,31 @@ impl EntityData<Iso2Data> for Iso2Data {
 }
 
 #[derive(Debug)]
-pub enum Iso2DataErr {
+pub enum RogueDataErr {
     Renderable(&'static str, RenderableErr),
     Transform(&'static str, TransformErr),
     Scene(&'static str, SceneErr),
     GetMut(&'static str),
 }
 
-impl fmt::Display for Iso2DataErr {
+impl fmt::Display for RogueDataErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Iso2DataErr::Renderable(_, ref err) => err.fmt(f),
-            Iso2DataErr::Transform(_, ref err) => err.fmt(f),
-            Iso2DataErr::Scene(_, ref err) => err.fmt(f),
-            Iso2DataErr::GetMut(_) => write!(f, "Get Mut was None"),
+            RogueDataErr::Renderable(_, ref err) => err.fmt(f),
+            RogueDataErr::Transform(_, ref err) => err.fmt(f),
+            RogueDataErr::Scene(_, ref err) => err.fmt(f),
+            RogueDataErr::GetMut(_) => write!(f, "Get Mut was None"),
         }
     }
 }
 
-impl Error for Iso2DataErr {
+impl Error for RogueDataErr {
     fn description(&self) -> &str {
         match *self {
-            Iso2DataErr::Renderable(_, ref err) => err.description(),
-            Iso2DataErr::Transform(_, ref err) => err.description(),
-            Iso2DataErr::Scene(_, ref err) => err.description(),
-            Iso2DataErr::GetMut(_) => "Get Mut was None",
+            RogueDataErr::Renderable(_, ref err) => err.description(),
+            RogueDataErr::Transform(_, ref err) => err.description(),
+            RogueDataErr::Scene(_, ref err) => err.description(),
+            RogueDataErr::GetMut(_) => "Get Mut was None",
         }
     }
 }
