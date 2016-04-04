@@ -9,8 +9,10 @@ use dorp::{
 use dorp::graphics::vertex_color;
 
 mod rogue_data;
+mod block;
 
 pub use self::rogue_data::{RogueData};
+pub use self::block::{Block};
 
 pub fn main() {
     let mut manager = IdManager::new();
