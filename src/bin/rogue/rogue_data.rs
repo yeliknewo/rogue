@@ -4,7 +4,7 @@ use std::fmt;
 
 use dorp::{
     EntityData, World, IdManager, Window, SyncData, Renderers, Id, Renderable, Named, Transform,
-    RenderableErr, TransformErr, Map3d, Scene
+    RenderableErr, TransformErr, Map3d, Scene, OptErr
 };
 
 use rogue::{Block};
@@ -66,12 +66,31 @@ impl RogueData {
         self.map_3d.clone()
     }
 
-    pub fn get_mut_map_3d(&mut self) -> Option<&mut Map3d<i32>> {
+    pub fn get_block(&self) -> Option<Arc<Block>> {
+        self.block.clone()
+    }
+
+    pub fn get_mut_map_3d(&mut self) -> OptErr<&mut Map3d<i32>, RogueDataErr> {
         match self.map_3d.as_mut() {
             Some(map_3d) => {
-                Arc::get_mut(map_3d)
+                match Arc::get_mut(map_3d) {
+                    Some(map_3d) => return OptErr::Full(map_3d),
+                    None => return OptErr::Error(RogueDataErr::GetMut("Arc Get Mut Map 3d")),
+                }
             },
-            None => return None,
+            None => return OptErr::Empty,
+        }
+    }
+
+    pub fn get_mut_block(&mut self) -> OptErr<&mut Block, RogueDataErr> {
+        match self.block.as_mut() {
+            Some(block) => {
+                match Arc::get_mut(block) {
+                    Some(block) => return OptErr::Full(block),
+                    None => return OptErr::Error(RogueDataErr::GetMut("Arc Get Mut Block")),
+                }
+            },
+            None => return OptErr::Empty,
         }
     }
 }

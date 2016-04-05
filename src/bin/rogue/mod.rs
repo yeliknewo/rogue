@@ -31,9 +31,7 @@ pub fn main() {
             let scene = Scene::new(Box::new(|manager, world| {
                 {
                     let id = Id::new(manager, IdType::Entity);
-
                     let map_3d = Map3d::<i32>::new();
-
                     let named = match Named::new("TileMap", id, world) {
                         Ok(named) => named,
                         Err(err) => return Err(Box::new(SceneErr::Named("Named New", err))),
@@ -107,7 +105,6 @@ pub fn main() {
                             for y in 0..height - 1 {
                                 for x in 0..width - 1 {
                                     let id = Id::new(manager, IdType::Entity);
-
                                     let mut renderable = Renderable::new();
                                     {
                                         let mut vertex_color = RenderableVertexColor::new_from(vertex_color.clone());
@@ -150,14 +147,12 @@ pub fn main() {
                                         vertex_color.set_model(Mat4::identity());
                                         renderable.set_vertex_color(vertex_color);
                                     }
-
                                     let mut transform  = Transform::new();
                                     let sx0 = (x as f32 + p0[0]) * scale[0];
                                     let sy0 = (y as f32 + p0[1]) * scale[1];
                                     let sz0 = (z as f32 + p0[2]) * scale[2];
                                     transform.set_position(Vec3::from([sx0, sy0, sz0]));
                                     transform.set_scalation(scale);
-
                                     match world.add_entity(RogueData::new(id)
                                         .with_renderable(renderable)
                                         .with_transform(transform)

@@ -4,7 +4,7 @@ use std::fmt;
 use std::error::Error;
 
 use input::{Keyboard, Mouse, Display, KeyCode, MouseButton, Button};
-use logic::{Id, EntityData};
+use logic::{Id, EntityData, OptErr};
 use math::{Vec2};
 
 pub struct World<T: EntityData<T>> {
@@ -135,18 +135,32 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
+    pub fn get_mut_entity_by_id(&mut self, id: Id) -> OptErr<&mut T, WorldErr> {
+        match Arc::get_mut(&mut self.entity_data) {
+            Some(entity_data) => match entity_data.get_mut(&id) {
+                Some(entity) => match Arc::get_mut(entity) {
+                    Some(entity) => return OptErr::Full(entity),
+                    None => return OptErr::Error(WorldErr::GetMut("Arc Get mut Entity")),
+                },
+                None => return OptErr::Empty,
+            },
+            None => return OptErr::Error(WorldErr::GetMut("Arc Get Mut &mut Self Entity Data")),
+        }
+    }
+
     pub fn get_entity_by_name(&self, name: &'static str) -> Option<Arc<T>> {
         match self.names.get(name) {
-            Some(id) => {
-                match self.entity_data.get(id) {
-                    Some(entity) => {
-                        Some(entity.clone())
-                    },
-                    None => None,
-                }
-            },
+            Some(id) => self.get_entity_by_id(*id),
             None => None,
         }
+    }
+
+    pub fn get_mut_entity_by_name(&mut self, name: &'static str) -> OptErr<&mut T, WorldErr> {
+        let id = *(match self.names.get(name) {
+            Some(id) => id,
+            None => return OptErr::Empty,
+        });
+        self.get_mut_entity_by_id(id)
     }
 
     pub fn register_name(&mut self, id: Id, name: &'static str) -> Result<(), WorldErr> {
