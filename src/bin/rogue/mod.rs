@@ -10,9 +10,11 @@ use dorp::graphics::vertex_color;
 
 mod rogue_data;
 mod block;
+mod block_coords;
 
 pub use self::rogue_data::{RogueData};
 pub use self::block::{Block};
+pub use self::block_coords::{BlockCoords};
 
 pub fn main() {
     let mut manager = IdManager::new();

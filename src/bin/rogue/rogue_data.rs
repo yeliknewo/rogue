@@ -7,12 +7,15 @@ use dorp::{
     RenderableErr, TransformErr, Map3d, Scene
 };
 
+use rogue::{Block};
+
 pub struct RogueData {
     renderable: Option<Arc<Renderable>>,
     named: Option<Arc<Named>>,
     transform: Option<Arc<Transform>>,
     map_3d: Option<Arc<Map3d<i32>>>,
     scene: Option<Arc<Scene<RogueData>>>,
+    block: Option<Arc<Block>>,
     id: Id,
 }
 
@@ -24,6 +27,7 @@ impl RogueData {
             transform: None,
             map_3d: None,
             scene: None,
+            block: None,
             id: id,
         }
     }
@@ -51,6 +55,24 @@ impl RogueData {
     pub fn with_scene(mut self, scene: Scene<RogueData>) -> RogueData {
         self.scene = Some(Arc::new(scene));
         self
+    }
+
+    pub fn with_block(mut self, block: Block) -> RogueData {
+        self.block = Some(Arc::new(block));
+        self
+    }
+
+    pub fn get_map_3d(&self) -> Option<Arc<Map3d<i32>>> {
+        self.map_3d.clone()
+    }
+
+    pub fn get_mut_map_3d(&mut self) -> Option<&mut Map3d<i32>> {
+        match self.map_3d.as_mut() {
+            Some(map_3d) => {
+                Arc::get_mut(map_3d)
+            },
+            None => return None,
+        }
     }
 }
 
