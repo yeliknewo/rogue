@@ -31,7 +31,10 @@ impl Block {
         let block_map_id = match world.get_mut_entity_by_name(block_map_name) {
             OptErr::Full(block_map) => {
                 match block_map.get_mut_block_map() {
-                    OptErr::Full(block_map) => block_coords.register(id, block_map),
+                    OptErr::Full(block_map) => match block_coords.register(id, block_map) {
+                        Ok(()) => (),
+                        Err(err) => panic!(),
+                    },
                     OptErr::Empty => return Err(BlockErr::Get("Block Map Get Mut Map 3d")),
                     OptErr::Error(err) => return Err(BlockErr::RogueData("Block map get mut map 3d", err)),
                 }
