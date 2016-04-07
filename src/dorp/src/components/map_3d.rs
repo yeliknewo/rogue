@@ -1,5 +1,7 @@
 use std::collections::{HashMap};
 use std::hash::{Hash};
+use std::error::Error;
+use std::fmt;
 
 use logic::{Id};
 
@@ -10,7 +12,7 @@ pub struct Map3d<T: Hash + Eq + Copy> {
 }
 
 impl<T: Hash + Eq + Copy> Map3d<T> {
-    #[inline]
+
     pub fn new() -> Map3d<T> {
         Map3d {
             tiles: HashMap::new(),
@@ -19,7 +21,7 @@ impl<T: Hash + Eq + Copy> Map3d<T> {
         }
     }
 
-    #[inline]
+
     pub fn tick_mut(&mut self) {
         if self.dirty_tiles {
             self.ticks += 1;
@@ -30,32 +32,30 @@ impl<T: Hash + Eq + Copy> Map3d<T> {
         }
     }
 
-    #[inline]
-    pub fn add_tile(&mut self, x: T, y: T, z: T, id: Id) {
-        match self.tiles.remove(&z) {
+
+    pub fn insert(&mut self, x: T, y: T, z: T, id: Id) -> Result<(), Map3dErr> {
+        if !self.tiles.contains_key(&z) {
+            self.tiles.insert(z, HashMap::new());
+        }
+        match self.tiles.get_mut(&z) {
             Some(mut plane) => {
-                match plane.remove(&y) {
+                if !plane.contains_key(&y) {
+                    plane.insert(y, HashMap::new());
+                }
+                match plane.get_mut(&y) {
                     Some(mut line) => {
                         line.insert(x, id);
-                        self.dirty_tiles = true;
-                        plane.insert(y, line);
                     },
-                    None => {
-                        plane.insert(y, HashMap::new());
-                        self.add_tile(x, y, z, id);
-                    }
+                    None => return Err(Map3dErr::Get("Plane Get Mut Y")),
                 }
-                self.tiles.insert(z, plane);
             },
-            None => {
-                self.tiles.insert(z, HashMap::new());
-                self.add_tile(x, y, z, id);
-            }
+            None => return Err(Map3dErr::Get("Self Tiles Get Mut Z")),
         }
+        Ok(())
     }
 
-    #[inline]
-    pub fn get_tile(&self, x: T, y: T, z: T) -> Option<Id> {
+
+    pub fn get(&self, x: T, y: T, z: T) -> Option<Id> {
         match self.tiles.get(&z) {
             Some(plane) => match plane.get(&y) {
                 Some(row) => match row.get(&x) {
@@ -68,13 +68,37 @@ impl<T: Hash + Eq + Copy> Map3d<T> {
         }
     }
 
-    #[inline]
-    pub fn get_tiles(&self) -> &HashMap<T, HashMap<T, HashMap<T, Id>>> {
+
+    pub fn get_all(&self) -> &HashMap<T, HashMap<T, HashMap<T, Id>>> {
         &self.tiles
     }
 
-    #[inline]
+
     pub fn is_dirty(&self) -> bool {
         self.dirty_tiles
+    }
+}
+
+#[derive(Debug)]
+pub enum Map3dErr {
+    // World(&'static str, WorldErr),
+    Get(&'static str),
+}
+
+impl fmt::Display for Map3dErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            // NamedErr::World(_, ref err) => err.fmt(f),
+            Map3dErr::Get(_) => write!(f, "Get was None"),
+        }
+    }
+}
+
+impl Error for Map3dErr {
+    fn description(&self) -> &str {
+        match *self {
+            // NamedErr::World(_, ref err) => err.description(),
+            Map3dErr::Get(_) => "Get was None",
+        }
     }
 }

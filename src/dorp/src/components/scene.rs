@@ -7,14 +7,14 @@ pub struct Scene<T: EntityData<T>> {
 }
 
 impl<T: EntityData<T>> Scene<T> {
-    #[inline]
+    
     pub fn new(setup: Box<Fn(&mut IdManager, &mut World<T>) -> Result<(), Box<Error>> + Send + Sync>) -> Scene<T> {
         Scene {
             setup: setup,
         }
     }
 
-    #[inline]
+    
     pub fn tick_mut(&mut self, my_id: Id, manager: &mut IdManager, world: &mut World<T>) -> Result<(), Box<Error>> {
         world.queue_remove_entity(my_id);
         (self.setup)(manager, world)

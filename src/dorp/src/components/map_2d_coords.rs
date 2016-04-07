@@ -9,7 +9,7 @@ pub struct Map2dCoords<T: Hash + Eq + Copy> {
 }
 
 impl<T: Hash + Eq + Copy> Map2dCoords<T> {
-    #[inline]
+
     pub fn new(x: T, y: T) -> Map2dCoords<T> {
         Map2dCoords {
             x: x,
@@ -17,8 +17,18 @@ impl<T: Hash + Eq + Copy> Map2dCoords<T> {
         }
     }
 
-    #[inline]
+
     pub fn register(&self, id: Id, map_2d: &mut Map2d<T>) {
-        map_2d.add_tile(self.x, self.y, id);
+        map_2d.insert(self.x, self.y, id);
+    }
+
+
+    pub fn get_x(&self) -> T {
+        self.x
+    }
+
+
+    pub fn get_y(&self) -> T {
+        self.y
     }
 }

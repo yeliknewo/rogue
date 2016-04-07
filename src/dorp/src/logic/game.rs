@@ -6,7 +6,7 @@ use time::{precise_time_s};
 use glium::glutin::Event as WindowEvent;
 
 use input::{Keyboard, Mouse, Display, KeyCode, ButtonState, MouseButton, Button};
-use logic::{World, WorldErr, EntityData, IdManager};
+use logic::{TickCount, World, WorldErr, EntityData, IdManager};
 use math::{Vec2};
 use graphics::{Window, FrameErr, SyncData, Renderers, RenderersErr};
 
@@ -14,10 +14,11 @@ pub struct Game<T: EntityData<T>> {
     world: Arc<World<T>>,
     sync_data: Arc<SyncData>,
     thread_pool: Pool,
+    tick_count: TickCount,
 }
 
 impl<T: EntityData<T>> Game<T> {
-    #[inline]
+    
     pub fn new(thread_count: u32, resolution: Vec2) -> Game<T> {
         let keyboard = Arc::new(Keyboard::new());
         let mouse = Arc::new(Mouse::new());
@@ -26,15 +27,16 @@ impl<T: EntityData<T>> Game<T> {
             world: Arc::new(World::new(keyboard.clone(), mouse.clone(), display.clone())),
             sync_data: Arc::new(SyncData::new()),
             thread_pool: Pool::new(thread_count),
+            tick_count: 0,
         }
     }
 
-    #[inline]
+    
     pub fn get_world(&self) -> Arc<World<T>> {
         self.world.clone()
     }
 
-    #[inline]
+    
     pub fn get_mut_world(&mut self) -> Result<&mut World<T>, GameErr> {
         match Arc::get_mut(&mut self.world) {
             Some(world) => Ok(world),
@@ -42,17 +44,17 @@ impl<T: EntityData<T>> Game<T> {
         }
     }
 
-    #[inline]
+    
     fn pause(&mut self) {
         println!("Paused");
     }
 
-    #[inline]
+    
     fn resume(&mut self) {
         println!("Resumed");
     }
 
-    #[inline]
+    
     fn update_keyboard(&mut self, tick_number: u64, key_code: KeyCode, element_state: ButtonState) -> Result<(), GameErr> {
         match Arc::get_mut(&mut self.world) {
             Some(world) => {
@@ -65,7 +67,7 @@ impl<T: EntityData<T>> Game<T> {
         }
     }
 
-    #[inline]
+    
     fn update_mouse_button(&mut self, tick_number: u64, mouse_button: MouseButton, element_state: ButtonState) -> Result<(), GameErr> {
         match Arc::get_mut(&mut self.world) {
             Some(world) => {
@@ -78,7 +80,7 @@ impl<T: EntityData<T>> Game<T> {
         }
     }
 
-    #[inline]
+    
     fn update_mouse_pos(&mut self, mouse_pos: (i32, i32)) -> Result<(), GameErr> {
         match Arc::get_mut(&mut self.world) {
             Some(world) => {
@@ -91,7 +93,7 @@ impl<T: EntityData<T>> Game<T> {
         }
     }
 
-    #[inline]
+    
     fn update_resolution(&mut self, resolution: (u32, u32)) -> Result<(), GameErr> {
         match Arc::get_mut(&mut self.world) {
             Some(world) => {
@@ -263,13 +265,15 @@ impl<T: EntityData<T>> Game<T> {
         {
             let world = self.world.clone();
             let delta_time = Arc::new(delta_time);
+            let tick_count = Arc::new(self.tick_count);
             self.thread_pool.scoped(|scope| {
                 for entry in world.get_entity_data().iter() {
                     let entity = entry.1.clone();
                     let world = world.clone();
                     let delta_time = delta_time.clone();
+                    let tick_count = tick_count.clone();
                     scope.execute(move || {
-                        match entity.tick(delta_time, world) {
+                        match entity.tick(tick_count, delta_time, world) {
                             Ok(()) => (),
                             Err(err) => Err(GameErr::Entity("Entity Tick", err)).unwrap(),
                         }
@@ -303,7 +307,7 @@ impl<T: EntityData<T>> Game<T> {
                     match match Arc::get_mut(&mut entity) {
                         Some(entity) => entity,
                         None => return Err(GameErr::GetMut("Arc Get Mut Entity")),
-                    }.tick_mut(manager, world) {
+                    }.tick_mut(self.tick_count, manager, world) {
                         Ok(()) => (),
                         Err(err) => return Err(GameErr::Entity("Entity Tick Mut", err)),
                     }
@@ -317,6 +321,7 @@ impl<T: EntityData<T>> Game<T> {
             },
             None => return Err(GameErr::GetMut("Arc Get Mut Self World")),
         }
+        self.tick_count += 1;
         Ok(())
     }
 }

@@ -17,7 +17,7 @@ pub struct World<T: EntityData<T>> {
 }
 
 impl<T: EntityData<T>> World<T> {
-    #[inline]
+
     pub fn new(keyboard: Arc<Keyboard>, mouse: Arc<Mouse>, display: Arc<Display>) -> World<T> {
         World {
             keyboard: keyboard,
@@ -29,7 +29,7 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn set_key(&mut self, key_code: KeyCode, key: Button) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.keyboard){
             Some(keyboard) => {
@@ -40,7 +40,7 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn set_mouse_button(&mut self, mouse_button: MouseButton, button: Button) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.mouse) {
             Some(mouse) => {
@@ -51,7 +51,7 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn set_mouse_position(&mut self, pos: Vec2) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.mouse) {
             Some(mouse) => {
@@ -62,7 +62,7 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn set_resolution(&mut self, resolution:  Vec2) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.display) {
             Some(display) => {
@@ -73,37 +73,37 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn get_key(&self, key_code: KeyCode) -> Button {
         self.keyboard.get_key(key_code)
     }
 
-    #[inline]
+
     pub fn get_mouse_button(&self, mouse_button: MouseButton) -> Button {
         self.mouse.get_button(mouse_button)
     }
 
-    #[inline]
+
     pub fn get_mouse_position(&self) -> Vec2 {
         self.mouse.get_mouse_position()
     }
 
-    #[inline]
+
     pub fn get_resolution(&self) -> Vec2 {
         self.display.get_resolution()
     }
 
-    #[inline]
+
     pub fn get_aspect_ratio(&self) -> f32 {
         self.display.get_aspect_ratio()
     }
 
-    #[inline]
+
     pub fn get_entity_data(&self) -> Arc<HashMap<Id, Arc<T>>> {
         self.entity_data.clone()
     }
 
-    #[inline]
+
     pub fn get_mut_entity_data(&mut self) -> Result<&mut HashMap<Id, Arc<T>>, WorldErr> {
         match Arc::get_mut(&mut self.entity_data) {
             Some(entity_data) => Ok(entity_data),
@@ -111,18 +111,21 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn add_entity(&mut self, entity: T) -> Result<(), WorldErr> {
+        self.add_entity_arc(Arc::new(entity))
+    }
+
+    pub fn add_entity_arc(&mut self, entity: Arc<T>) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.entity_data) {
             Some(entity_data) => {
-                entity_data.insert(entity.get_id(), Arc::new(entity));
+                entity_data.insert(entity.get_id(), entity);
                 Ok(())
             },
             None => Err(WorldErr::GetMut("Arc Get Mut Self EntityData")),
         }
     }
 
-    #[inline]
     pub fn tick_mut(&mut self) -> Result<(), WorldErr> {
         let len = self.to_remove.len();
         match Arc::get_mut(&mut self.entity_data) {
@@ -136,12 +139,12 @@ impl<T: EntityData<T>> World<T> {
         Ok(())
     }
 
-    #[inline]
+
     pub fn queue_remove_entity(&mut self, id: Id) {
         self.to_remove.push(id);
     }
 
-    #[inline]
+
     pub fn get_entity_by_id(&self, id: Id) -> Option<Arc<T>> {
         match self.entity_data.get(&id) {
             Some(entity_data) => {
@@ -151,7 +154,7 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn get_mut_entity_by_id(&mut self, id: Id) -> OptErr<&mut T, WorldErr> {
         match Arc::get_mut(&mut self.entity_data) {
             Some(entity_data) => match entity_data.get_mut(&id) {
@@ -165,7 +168,18 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
+    pub fn take_entity_by_id(&mut self, id: Id) -> OptErr<Arc<T>, WorldErr> {
+        match Arc::get_mut(&mut self.entity_data) {
+            Some(entity_data) => match entity_data.remove(&id) {
+                Some(entity) => return OptErr::Full(entity),
+                None => return OptErr::Empty,
+            },
+            None => return OptErr::Error(WorldErr::GetMut("Arc Get Mut Mut self entity data")),
+        }
+    }
+
+
     pub fn get_entity_by_name(&self, name: &'static str) -> Option<Arc<T>> {
         match self.names.get(name) {
             Some(id) => self.get_entity_by_id(*id),
@@ -173,7 +187,7 @@ impl<T: EntityData<T>> World<T> {
         }
     }
 
-    #[inline]
+
     pub fn get_mut_entity_by_name(&mut self, name: &'static str) -> OptErr<&mut T, WorldErr> {
         let id = *(match self.names.get(name) {
             Some(id) => id,
@@ -182,7 +196,7 @@ impl<T: EntityData<T>> World<T> {
         self.get_mut_entity_by_id(id)
     }
 
-    #[inline]
+
     pub fn register_name(&mut self, id: Id, name: &'static str) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.names) {
             Some(names) => {
@@ -196,8 +210,8 @@ impl<T: EntityData<T>> World<T> {
             None => Err(WorldErr::GetMut("Arc Get Mut Self Names")),
         }
     }
-    
-    #[inline]
+
+
     pub fn deregister_name(&mut self, name: &'static str) -> Result<(), WorldErr> {
         match Arc::get_mut(&mut self.names) {
             Some(names) => {

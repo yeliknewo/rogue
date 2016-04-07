@@ -4,7 +4,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    #[inline]
+    
     pub fn new(position: [f32; 3]) -> Vertex {
         Vertex{
             position: position,
@@ -12,7 +12,7 @@ impl Vertex {
     }
 }
 
-#[inline]
+
 pub fn init_vertex() {
     implement_vertex!(Vertex, position);
 }

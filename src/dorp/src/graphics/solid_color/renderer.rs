@@ -19,7 +19,7 @@ pub struct RendererSolidColor {
 }
 
 impl RendererSolidColor {
-    #[inline]
+    
     pub fn new(window: &mut Window) -> Result<RendererSolidColor, RendererSolidColorErr> {
         init_vertex();
         let vertex_shader_src = r#"
@@ -60,7 +60,7 @@ impl RendererSolidColor {
         )
     }
 
-    #[inline]
+    
     pub fn set_vertices(&mut self, id: Id, window: &mut Window, vertices: Vec<Vertex>) -> Result<(), RendererSolidColorErr> {
         self.vertex_buffers.insert(id, match VertexBuffer::new(window.get_facade(), &vertices) {
             Ok(buffer) => buffer,
@@ -69,7 +69,7 @@ impl RendererSolidColor {
         Ok(())
     }
 
-    #[inline]
+    
     pub fn set_indices(&mut self, id: Id, window: &mut Window, indices: Vec<Index>) -> Result<(), RendererSolidColorErr> {
         self.index_buffers.insert(id, match IndexBuffer::new(window.get_facade(), glium::index::PrimitiveType::TrianglesList, &indices) {
             Ok(buffer) => buffer,
@@ -78,7 +78,7 @@ impl RendererSolidColor {
         Ok(())
     }
 
-    #[inline]
+    
     pub fn set_draw_method(&mut self, id: Id, draw_method: DrawMethod) {
         self.draw_parameters.insert(id, method_to_parameters(draw_method));
     }

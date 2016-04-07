@@ -4,7 +4,7 @@ use std::fmt;
 
 use dorp::{
     EntityData, World, IdManager, Window, SyncData, Renderers, Id, Renderable, Named, Transform,
-    RenderableErr, TransformErr, Map3d, Scene, OptErr
+    RenderableErr, TransformErr, Map3d, Scene, OptErr, TickCount
 };
 
 use rogue::{Block, BlockMap, BlockCoords};
@@ -34,50 +34,61 @@ impl RogueData {
         }
     }
 
-    #[inline]
+
     pub fn with_renderable(mut self, renderable: Renderable) -> RogueData {
         self.renderable = Some(Arc::new(renderable));
         self
     }
 
-    #[inline]
+
     pub fn with_named(mut self, named: Named) -> RogueData {
         self.named = Some(Arc::new(named));
         self
     }
 
-    #[inline]
+
     pub fn with_transform(mut self, transform: Transform) -> RogueData {
         self.transform = Some(Arc::new(transform));
         self
     }
 
-    #[inline]
+
     pub fn with_block_map(mut self, block_map: BlockMap) -> RogueData {
         self.block_map = Some(Arc::new(block_map));
         self
     }
 
-    #[inline]
+
     pub fn with_scene(mut self, scene: Scene<RogueData>) -> RogueData {
         self.scene = Some(Arc::new(scene));
         self
     }
 
-    #[inline]
+
     pub fn with_block(mut self, block: Block) -> RogueData {
         self.block = Some(Arc::new(block));
         self
     }
 
-    #[inline]
-    pub fn get_map_3d(&self) -> Option<Arc<BlockMap>> {
+
+    pub fn with_block_coords(mut self, block_coords: BlockCoords) -> RogueData {
+        self.block_coords = Some(Arc::new(block_coords));
+        self
+    }
+
+
+    pub fn get_block_map(&self) -> Option<Arc<BlockMap>> {
         self.block_map.clone()
     }
 
-    #[inline]
+
     pub fn get_block(&self) -> Option<Arc<Block>> {
         self.block.clone()
+    }
+
+
+    pub fn get_block_coords(&self) -> Option<Arc<BlockCoords>> {
+        self.block_coords.clone()
     }
 
     pub fn get_mut_block_map(&mut self) -> OptErr<&mut BlockMap, RogueDataErr> {
@@ -106,11 +117,11 @@ impl RogueData {
 }
 
 impl EntityData<RogueData> for RogueData {
-    fn tick(&self, delta_time: Arc<f64>, world: Arc<World<RogueData>>) -> Result<(), Box<Error>> {
+    fn tick(&self, tick_count: Arc<TickCount>, delta_time: Arc<f64>, world: Arc<World<RogueData>>) -> Result<(), Box<Error>> {
         Ok(())
     }
 
-    fn tick_mut(&mut self, manager: &mut IdManager, world: &mut World<RogueData>) -> Result<(), Box<Error>> {
+    fn tick_mut(&mut self, tick_count: TickCount, manager: &mut IdManager, world: &mut World<RogueData>) -> Result<(), Box<Error>> {
         let id = self.get_id();
         match self.scene.as_mut() {
             Some(scene) => {
@@ -159,22 +170,22 @@ impl EntityData<RogueData> for RogueData {
         Ok(())
     }
 
-    #[inline]
+
     fn get_renderable(&self) -> Option<Arc<Renderable>> {
         self.renderable.clone()
     }
 
-    #[inline]
+
     fn get_named(&self) -> Option<Arc<Named>> {
         self.named.clone()
     }
 
-    #[inline]
+
     fn get_transform(&self) -> Option<Arc<Transform>> {
         self.transform.clone()
     }
 
-    #[inline]
+
     fn get_id(&self) -> Id {
         self.id
     }

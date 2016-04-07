@@ -8,44 +8,44 @@ pub struct Vec4 {
 }
 
 impl Vec4 {
-    #[inline]
+    
 	pub fn zero() -> Vec4 {
 		Vec4::from([0.0; 4])
 	}
 
-    #[inline]
+    
 	pub fn one() -> Vec4 {
 		Vec4::from([1.0; 4])
 	}
 
-    #[inline]
+    
 	pub fn x_unit() -> Vec4 {
 		Vec4::from([1.0, 0.0, 0.0, 0.0])
 	}
 
-    #[inline]
+    
 	pub fn y_unit() -> Vec4 {
 		Vec4::from([0.0, 1.0, 0.0, 0.0])
 	}
 
-    #[inline]
+    
 	pub fn z_unit() -> Vec4 {
 		Vec4::from([0.0, 0.0, 1.0, 0.0])
 	}
 
-    #[inline]
+    
 	pub fn w_unit() -> Vec4 {
 		Vec4::from([0.0, 0.0, 0.0, 1.0])
 	}
 
-    #[inline]
+    
 	pub fn get_vals(&self) -> [f32; 4] {
 		self.vals
 	}
 }
 
 impl From<[f32; 4]> for Vec4 {
-    #[inline]
+    
 	fn from(vals: [f32; 4]) -> Vec4 {
 		Vec4 {
 			vals: vals,
@@ -54,7 +54,7 @@ impl From<[f32; 4]> for Vec4 {
 }
 
 impl AsUniformValue for Vec4 {
-    #[inline]
+    
 	fn as_uniform_value(&self) -> UniformValue {
 		UniformValue::Vec4(self.vals)
 	}
@@ -63,14 +63,14 @@ impl AsUniformValue for Vec4 {
 impl Index<usize> for Vec4 {
 	type Output = f32;
 
-    #[inline]
+    
 	fn index(&self, index: usize) -> &f32 {
 		&self.vals[index]
 	}
 }
 
 impl IndexMut<usize> for Vec4 {
-    #[inline]
+    
 	fn index_mut(&mut self, index: usize) -> &mut f32 {
 		&mut self.vals[index]
 	}
@@ -79,7 +79,7 @@ impl IndexMut<usize> for Vec4 {
 impl Add<Vec4> for Vec4{
 	type Output = Vec4;
 
-    #[inline]
+    
 	fn add(self, other: Vec4) -> Vec4 {
 		Vec4::from([self[0] + other[0], self[1] + other[1], self[2] + other[2], self[3] + other[3]])
 	}
@@ -88,7 +88,7 @@ impl Add<Vec4> for Vec4{
 impl Sub<Vec4> for Vec4 {
 	type Output = Vec4;
 
-    #[inline]
+    
 	fn sub(self, other: Vec4) -> Vec4 {
 		Vec4::from([self[0] - other[0], self[1] - other[1], self[2] - other[2], self[3] - other[3]])
 	}
@@ -97,7 +97,7 @@ impl Sub<Vec4> for Vec4 {
 impl Mul<Vec4> for Vec4 {
 	type Output = Vec4;
 
-    #[inline]
+    
 	fn mul(self, other: Vec4) -> Vec4 {
 		Vec4::from([self[0] * other[0], self[1] * other[1], self[2] * other[2], self[3] * other[3]])
 	}
@@ -106,7 +106,7 @@ impl Mul<Vec4> for Vec4 {
 impl Mul<f32> for Vec4 {
 	type Output = Vec4;
 
-    #[inline]
+    
 	fn mul(self, other: f32) -> Vec4 {
 		Vec4::from([self[0] * other, self[1] * other, self[2] * other, self[3] * other])
 	}

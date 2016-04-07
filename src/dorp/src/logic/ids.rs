@@ -7,7 +7,7 @@ pub struct Id {
 }
 
 impl Id {
-    #[inline]
+    
     pub fn new(manager: &mut IdManager, id_type: IdType) -> Id {
         Id {
             id: manager.get_id(id_type),
@@ -44,14 +44,14 @@ pub struct IdManager {
 }
 
 impl IdManager {
-    #[inline]
+    
     pub fn new() -> IdManager {
         IdManager {
             map: HashMap::new(),
         }
     }
 
-    #[inline]
+    
     fn get_id(&mut self, id_type: IdType) -> IdSize {
         let id = match self.map.get(&id_type) {
             Some(id) => *id,

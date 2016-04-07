@@ -19,7 +19,7 @@ pub struct Frame {
 }
 
 impl Frame {
-    #[inline]
+    
     fn new(facade: & mut GlutinFacade, renderers: Renderers) -> Frame {
         let mut frame  = facade.draw();
         frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
@@ -29,7 +29,7 @@ impl Frame {
         }
     }
 
-    #[inline]
+    
     pub fn draw_entity<Y: EntityData<Y>>(&mut self, entity: &Y, sync_data: &SyncData) -> Result<(), FrameErr> {
         match entity.get_renderable() {
             Some(renderable) => {
@@ -53,7 +53,7 @@ impl Frame {
         }
     }
 
-    #[inline]
+    
     pub fn end(self) -> Result<Renderers, FrameErr> {
         match self.frame.finish() {
             Ok(()) => Ok(self.renderers),

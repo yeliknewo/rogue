@@ -10,7 +10,7 @@ pub struct Map2d<T: Hash + Eq + Copy> {
 }
 
 impl<T: Hash + Eq + Copy> Map2d<T> {
-    #[inline]
+    
     pub fn new() -> Map2d<T> {
         Map2d {
             tiles: HashMap::new(),
@@ -19,7 +19,7 @@ impl<T: Hash + Eq + Copy> Map2d<T> {
         }
     }
 
-    #[inline]
+    
     pub fn tick_mut(&mut self) {
         if self.dirty_tiles {
             self.ticks += 1;
@@ -30,8 +30,8 @@ impl<T: Hash + Eq + Copy> Map2d<T> {
         }
     }
 
-    #[inline]
-    pub fn add_tile(&mut self, x: T, y: T, id: Id) {
+    
+    pub fn insert(&mut self, x: T, y: T, id: Id) {
         match self.tiles.remove(&y) {
             Some(mut row) => {
                 row.insert(x, id);
@@ -40,13 +40,13 @@ impl<T: Hash + Eq + Copy> Map2d<T> {
             },
             None => {
                 self.tiles.insert(y, HashMap::new());
-                self.add_tile(x, y, id);
+                self.insert(x, y, id);
             }
         }
     }
 
-    #[inline]
-    pub fn get_tile(&self, x: T, y: T) -> Option<Id> {
+    
+    pub fn get(&self, x: T, y: T) -> Option<Id> {
         match self.tiles.get(&y) {
             Some(row) => match row.get(&x) {
                 Some(id) => Some(id.clone()),
@@ -56,12 +56,12 @@ impl<T: Hash + Eq + Copy> Map2d<T> {
         }
     }
 
-    #[inline]
-    pub fn get_tiles(&self) -> &HashMap<T, HashMap<T, Id>> {
+    
+    pub fn get_all(&self) -> &HashMap<T, HashMap<T, Id>> {
         &self.tiles
     }
 
-    #[inline]
+    
     pub fn is_dirty(&self) -> bool {
         self.dirty_tiles
     }

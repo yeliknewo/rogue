@@ -13,7 +13,7 @@ pub struct Renderers {
 }
 
 impl Renderers {
-    #[inline]
+    
     pub fn new(window: &mut Window) -> Result<Renderers, RenderersErr> {
         Ok(
             Renderers {
@@ -33,17 +33,17 @@ impl Renderers {
         )
     }
 
-    #[inline]
+    
     pub fn get_mut_solid_color(&mut self) -> &mut RendererSolidColor {
         &mut self.renderer_solid_color
     }
 
-    #[inline]
+    
     pub fn get_mut_vertex_color(&mut self) -> &mut RendererVertexColor {
         &mut self.renderer_vertex_color
     }
 
-    #[inline]
+    
     pub fn get_mut_texture2d(&mut self) -> &mut RendererTex2 {
         &mut self.renderer_texture2d
     }

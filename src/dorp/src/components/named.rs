@@ -8,7 +8,7 @@ pub struct Named {
 }
 
 impl Named {
-    #[inline]
+    
     pub fn new<T: EntityData<T>>(name: &'static str, id: Id, world: &mut World<T>) -> Result<Named, NamedErr> {
         match world.register_name(id, name) {
             Ok(_) => {
@@ -22,7 +22,7 @@ impl Named {
         }
     }
 
-    #[inline]
+    
     pub fn get_name(&self) -> &'static str {
         self.name
     }

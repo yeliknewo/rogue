@@ -6,7 +6,7 @@ pub struct Display {
 }
 
 impl Display {
-    #[inline]
+    
     pub fn new(resolution: Vec2) -> Display {
         Display {
             aspect_ratio: resolution[0] / resolution[1],
@@ -14,18 +14,18 @@ impl Display {
         }
     }
 
-    #[inline]
+    
     pub fn set_resolution(&mut self, resolution: Vec2) {
         self.resolution = resolution;
         self.aspect_ratio = resolution[0] / resolution[1];
     }
 
-    #[inline]
+    
     pub fn get_resolution(&self) -> Vec2 {
         self.resolution
     }
 
-    #[inline]
+    
     pub fn get_aspect_ratio(&self) -> f32 {
         self.aspect_ratio
     }

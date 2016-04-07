@@ -11,21 +11,18 @@ pub struct Mat4 {
 }
 
 impl Mat4 {
-    #[inline]
 	pub fn identity() -> Mat4 {
 		Mat4 {
 			vals: [Vec4::x_unit(), Vec4::y_unit(), Vec4::z_unit(), Vec4::w_unit()],
 		}
 	}
 
-    #[inline]
 	pub fn zero() -> Mat4 {
 		Mat4{
 			vals: [Vec4::zero(); 4],
 		}
 	}
 
-    #[inline]
 	pub fn perspective(near: f32, far: f32, field_of_view: f32, aspect_ratio: f32) -> Mat4 {
 		let field_of_view = field_of_view * DEG_TO_RAD;
 		let d = 1.0 / ((field_of_view / 2.0).tan());
@@ -42,7 +39,6 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
 	pub fn orthographic(near: f32, far: f32, field_of_view: f32, aspect_ratio: f32) -> Mat4 {
 		let field_of_view = field_of_view * DEG_TO_RAD;
 		let d = 1.0 / ((field_of_view / 2.0).tan());
@@ -59,12 +55,10 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
 	pub fn view_deg(pitch: f32, yaw: f32, camera_position: Vec3) -> Mat4 {
 		Mat4::view(pitch * PI / 180.0, yaw * PI / 180.0, camera_position)
 	}
 
-    #[inline]
 	pub fn view(pitch: f32, yaw: f32, camera_position: Vec3) -> Mat4{
 		let pitch_cos = pitch.cos();
 		let pitch_sin = pitch.sin();
@@ -89,7 +83,7 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
+
 	pub fn scalation_from_vec3(vec3: Vec3) -> Mat4 {
 		Mat4::from([[
 					vec3[0], 	0.0, 		0.0, 		0.0,
@@ -104,7 +98,7 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
+
 	pub fn translation_from_vec3(vec3: Vec3) -> Mat4 {
 		Mat4::from([[
 					1.0, 	0.0, 		0.0, 		vec3[0],
@@ -119,12 +113,12 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
+
 	pub fn rotation_from_vec3(vec3: Vec3) -> Mat4 {
 		Mat4::z_rotation(vec3[2]) * Mat4::y_rotation(vec3[1]) * Mat4::x_rotation(vec3[0])
 	}
 
-    #[inline]
+
 	pub fn x_rotation(x_rads: f32) -> Mat4 {
 		let c = x_rads.cos();
 		let s = x_rads.sin();
@@ -142,7 +136,7 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
+
 	pub fn y_rotation(y_rads: f32) -> Mat4 {
 		let c = y_rads.cos();
 		let s = y_rads.sin();
@@ -160,7 +154,7 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
+
 	pub fn z_rotation(z_rads: f32) -> Mat4 {
 		let c = z_rads.cos();
 		let s = z_rads.sin();
@@ -178,7 +172,7 @@ impl Mat4 {
 		)
 	}
 
-    #[inline]
+
 	pub fn to_inverse(&self) -> Mat4 {
 		let mut me = self.clone();
 		let mut other = Mat4::identity();
@@ -211,24 +205,24 @@ impl Mat4 {
 		other
 	}
 
-    #[inline]
+
 	fn swap_rows(&mut self, y1: usize, y2: usize) {
 		let row = self[y1];
 		self[y1] = self[y2];
 		self[y2] = row;
 	}
 
-    #[inline]
+
 	fn scale_row(&mut self, y1: usize, scalar: f32) {
 		self[y1] = self[y1] * scalar;
 	}
 
-    #[inline]
+
 	fn add_row(&mut self, y1: usize, y2: usize, scalar: f32) {
 		self[y1] = self[y1] + self[y2] * scalar;
 	}
 
-    #[inline]
+
 	fn get_vals(&self) -> [[f32; 4]; 4] {
 		[
 			self.vals[0].get_vals(),
@@ -240,7 +234,7 @@ impl Mat4 {
 }
 
 impl From<[[f32; 4]; 4]> for Mat4 {
-    #[inline]
+
 	fn from(vals: [[f32; 4]; 4]) -> Mat4 {
 		Mat4 {
 			vals: [
@@ -254,7 +248,7 @@ impl From<[[f32; 4]; 4]> for Mat4 {
 }
 
 impl AsUniformValue for Mat4 {
-    #[inline]
+
 	fn as_uniform_value(&self) -> UniformValue {
 		UniformValue::Mat4(self.get_vals())
 	}
@@ -263,14 +257,14 @@ impl AsUniformValue for Mat4 {
 impl Index<usize> for Mat4 {
 	type Output = Vec4;
 
-    #[inline]
+
 	fn index(&self, index: usize) -> &Vec4 {
 		&self.vals[index]
 	}
 }
 
 impl IndexMut<usize> for Mat4 {
-    #[inline]
+
 	fn index_mut(&mut self, index: usize) -> &mut Vec4 {
 		&mut self.vals[index]
 	}
@@ -279,7 +273,7 @@ impl IndexMut<usize> for Mat4 {
 impl Mul<Vec4> for Mat4 {
 	type Output = Vec4;
 
-    #[inline]
+
 	fn mul(self, other: Vec4) -> Vec4 {
 		let mut new: Vec4 = Vec4::zero();
 		for y in 0..4 {
@@ -296,7 +290,7 @@ impl Mul<Vec4> for Mat4 {
 impl Mul<Mat4> for Mat4 {
 	type Output = Mat4;
 
-    #[inline]
+
 	fn mul(self, other: Mat4) -> Mat4 {
 		let mut new: Mat4 = Mat4::zero();
 		for x in 0..4 {

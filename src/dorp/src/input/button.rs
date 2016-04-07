@@ -8,7 +8,7 @@ pub struct Button {
 
 #[allow(dead_code)]
 impl Button {
-    #[inline]
+    
     pub fn new(tick_number: u64, state: ButtonState) -> Button {
         Button {
             tick_number: tick_number,
@@ -16,12 +16,12 @@ impl Button {
         }
     }
 
-    #[inline]
+    
     pub fn get_tick_number(&self) -> u64 {
         self.tick_number
     }
 
-    #[inline]
+    
     pub fn get_state(&self) -> ButtonState {
         self.state
     }

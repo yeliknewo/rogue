@@ -14,7 +14,6 @@ pub struct Renderable {
 }
 
 impl Renderable {
-    #[inline]
     pub fn new() -> Renderable {
         Renderable {
             renderer_type: RendererType::Empty,
@@ -24,7 +23,6 @@ impl Renderable {
         }
     }
 
-    #[inline]
     pub fn new_from(other: Arc<Renderable>) -> Renderable {
         Renderable {
             renderer_type: other.renderer_type,
@@ -96,45 +94,45 @@ impl Renderable {
         Ok(())
     }
 
-    #[inline]
+
     pub fn set_texture2d(&mut self, texture2d: RenderableTex2) {
         self.texture2d = Some(Arc::new(texture2d));
         self.renderer_type = RendererType::Texture2d;
     }
 
-    #[inline]
+
     pub fn set_vertex_color(&mut self, vertex_color: RenderableVertexColor) {
         self.vertex_color = Some(Arc::new(vertex_color));
         self.renderer_type = RendererType::VertexColor;
     }
 
-    #[inline]
+
     pub fn set_solid_color(&mut self, solid_color: RenderableSolidColor) {
         self.solid_color = Some(Arc::new(solid_color));
         self.renderer_type = RendererType::SolidColor;
     }
 
-    #[inline]
+
     pub fn get_renderer_type(&self) -> RendererType {
         self.renderer_type
     }
 
-    #[inline]
+
     pub fn get_texture2d(&self) -> Option<Arc<RenderableTex2>> {
         self.texture2d.clone()
     }
 
-    #[inline]
+
     pub fn get_solid_color(&self) -> Option<Arc<RenderableSolidColor>> {
         self.solid_color.clone()
     }
 
-    #[inline]
+
     pub fn get_vertex_color(&self) -> Option<Arc<RenderableVertexColor>> {
         self.vertex_color.clone()
     }
 
-    #[inline]
+
     pub fn get_mut_texture2d(&mut self) -> Option<&mut RenderableTex2> {
         match self.texture2d.as_mut() {
             Some(texture2d) => Arc::get_mut(texture2d),
@@ -142,7 +140,7 @@ impl Renderable {
         }
     }
 
-    #[inline]
+
     pub fn get_mut_solid_color(&mut self) -> Option<&mut RenderableSolidColor> {
         match self.solid_color.as_mut() {
             Some(solid_color) => Arc::get_mut(solid_color),
@@ -150,7 +148,7 @@ impl Renderable {
         }
     }
 
-    #[inline]
+
     pub fn get_mut_vertex_color(&mut self) -> Option<&mut RenderableVertexColor> {
         match self.vertex_color.as_mut() {
             Some(vertex_color) => Arc::get_mut(vertex_color),

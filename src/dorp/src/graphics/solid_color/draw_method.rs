@@ -20,7 +20,7 @@ pub enum CullingMethod {
     CounterClockwise,
 }
 
-#[inline]
+
 pub fn method_to_parameters(method: DrawMethod) -> DrawParameters<'static> {
     match method {
         DrawMethod::Both(depth, cull) => {
