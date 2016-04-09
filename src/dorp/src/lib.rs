@@ -4,6 +4,7 @@ extern crate glium;
 extern crate time;
 extern crate image;
 extern crate scoped_threadpool;
+extern crate yaml_rust;
 
 mod math;
 mod input;

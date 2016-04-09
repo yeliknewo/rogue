@@ -3,7 +3,7 @@ use std::error::Error;
 use std::sync::{Arc};
 
 use dorp::{
-    Id, World, WorldErr, OptErr, EntityData, TickCount
+    Id, World, WorldErr, OptErr, EntityData
 };
 
 use rogue::{RogueData, RogueDataErr, BlockCoords, RogueWorld, BlockMap};

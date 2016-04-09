@@ -11,6 +11,7 @@ use dorp::graphics::vertex_color;
 mod rogue_data;
 pub mod block;
 pub mod utils;
+pub mod entities;
 
 pub use self::rogue_data::{RogueData, RogueDataErr};
 pub use self::block::{Block, BlockErr, BlockCoords, BlockMap, BlockType};
@@ -38,7 +39,6 @@ pub fn main() {
                         Ok(named) => named,
                         Err(err) => return Err(Box::new(SceneErr::Named("Named New", err))),
                     };
-
                     match world.add_entity(RogueData::new(id)
                         .with_block_map(
                             block_map
@@ -152,7 +152,6 @@ pub fn main() {
 
                                     let block_coords = BlockCoords::new(x as i64, y as i64, z as i64);
 
-                                    println!("Block Created");
                                     let block = {
                                         let mut block_map = match world.get_mut_entity_by_id(block_map_id) {
                                             OptErr::Full(block_map_entity) => match block_map_entity.get_mut_block_map() {
