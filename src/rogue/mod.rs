@@ -9,12 +9,12 @@ use dorp::{
 use dorp::graphics::vertex_color;
 
 mod rogue_data;
-pub mod block;
+pub mod components;
 pub mod utils;
 pub mod entities;
 
 pub use self::rogue_data::{RogueData, RogueDataErr};
-pub use self::block::{Block, BlockErr, BlockCoords, BlockMap, BlockType};
+pub use self::components::{Block, BlockErr, BlockCoords, BlockMap, BlockType};
 pub use self::utils::{RogueWorld};
 
 pub static BLOCK_MAP_NAME: &'static str = "BlockMap";

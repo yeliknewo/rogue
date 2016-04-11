@@ -21,7 +21,7 @@ enum NeighborState {
 
 pub struct Block {
     block_type: BlockType,
-    block_map_id: Id,
+    block_map_id: Option<Id>,
     neighbors: Vec<Id>,
     neighbor_state: NeighborState,
 }
@@ -46,7 +46,7 @@ impl Block {
         Ok(
             Block {
                 block_type: block_type,
-                block_map_id: block_map_id,
+                block_map_id: Some(block_map_id),
                 neighbors: vec!(),
                 neighbor_state: NeighborState::New,
             }
@@ -55,9 +55,9 @@ impl Block {
 
     pub fn new_with_block_map(block_type: BlockType, id: Id, block_coords: &BlockCoords, block_map: &mut BlockMap, block_map_id: Id) -> Block {
         block_coords.register(id, block_map);
-        Block{
+        Block {
             block_type: block_type,
-            block_map_id: block_map_id,
+            block_map_id: Some(block_map_id),
             neighbors: vec!(),
             neighbor_state: NeighborState::New,
         }
@@ -82,51 +82,56 @@ impl Block {
             Some(my_entity) => {
                 match my_entity.get_block_coords() {
                     Some(block_coords) => {
-                        match world.get_entity_by_id(self.block_map_id) {
-                            Some(block_map_entity) => {
-                                match block_map_entity.get_block_map() {
-                                    Some(block_map) => {
-                                        for z in -1..2 {
-                                            for y in -1..2 {
-                                                for x in -1..2 {
-                                                    match block_map.get(block_coords.get_x() + x, block_coords.get_y() + y, block_coords.get_z() + z) {
-                                                        Some(block_id) => {
-                                                            if trigger_more {
-                                                                match world.take_entity_by_id(block_id) {
-                                                                    OptErr::Full(mut block_entity_arc) => {
-                                                                        match Arc::get_mut(&mut block_entity_arc) {
-                                                                            Some(block_entity) => {
-                                                                                match block_entity.get_mut_block() {
-                                                                                    OptErr::Full(block) => {
-                                                                                        match block.update_neighbors(block_id, false, world) {
-                                                                                            Ok(()) => (),
-                                                                                            Err(err) => return Err(BlockErr::Block("Block Update Neighbors Block Id False World", Box::new(err))),
+                        match self.block_map_id {
+                            Some(block_map_id) => {
+                                match world.get_entity_by_id(block_map_id) {
+                                    Some(block_map_entity) => {
+                                        match block_map_entity.get_block_map() {
+                                            Some(block_map) => {
+                                                for z in -1..2 {
+                                                    for y in -1..2 {
+                                                        for x in -1..2 {
+                                                            match block_map.get(block_coords.get_x() + x, block_coords.get_y() + y, block_coords.get_z() + z) {
+                                                                Some(block_id) => {
+                                                                    if trigger_more {
+                                                                        match world.take_entity_by_id(block_id) {
+                                                                            OptErr::Full(mut block_entity_arc) => {
+                                                                                match Arc::get_mut(&mut block_entity_arc) {
+                                                                                    Some(block_entity) => {
+                                                                                        match block_entity.get_mut_block() {
+                                                                                            OptErr::Full(block) => {
+                                                                                                match block.update_neighbors(block_id, false, world) {
+                                                                                                    Ok(()) => (),
+                                                                                                    Err(err) => return Err(BlockErr::Block("Block Update Neighbors Block Id False World", Box::new(err))),
+                                                                                                }
+                                                                                            },
+                                                                                            OptErr::Empty => return Err(BlockErr::Get("Block Entity Get Mut Block")),
+                                                                                            OptErr::Error(err) => return Err(BlockErr::RogueData("Block Entity Get Mut Block", err)),
                                                                                         }
                                                                                     },
-                                                                                    OptErr::Empty => return Err(BlockErr::Get("Block Entity Get Mut Block")),
-                                                                                    OptErr::Error(err) => return Err(BlockErr::RogueData("Block Entity Get Mut Block", err)),
+                                                                                    None => return Err(BlockErr::GetMut("Arc Get Mut Block Entity Arc")),
                                                                                 }
+                                                                                world.add_entity_arc(block_entity_arc);
                                                                             },
-                                                                            None => return Err(BlockErr::GetMut("Arc Get Mut Block Entity Arc")),
+                                                                            OptErr::Empty => return Err(BlockErr::Get("World Get Mut Entity By Id Block Id")),
+                                                                            OptErr::Error(err) => return Err(BlockErr::World("World get Mut Entity by Id Block Id", err)),
                                                                         }
-                                                                        world.add_entity_arc(block_entity_arc);
-                                                                    },
-                                                                    OptErr::Empty => return Err(BlockErr::Get("World Get Mut Entity By Id Block Id")),
-                                                                    OptErr::Error(err) => return Err(BlockErr::World("World get Mut Entity by Id Block Id", err)),
-                                                                }
+                                                                    }
+                                                                    self.neighbors.push(block_id);
+                                                                },
+                                                                None => return Err(BlockErr::Get("Block Map Get Tile Block Coords + Offset")),
                                                             }
-                                                            self.neighbors.push(block_id);
-                                                        },
-                                                        None => return Err(BlockErr::Get("Block Map Get Tile Block Coords + Offset")),
+                                                        }
                                                     }
                                                 }
-                                            }
+                                            },
+                                            None => return Err(BlockErr::Get("Block Map Entitty Get Block Map")),
                                         }
                                     },
-                                    None => return Err(BlockErr::Get("Block Map Entitty Get Block Map")),
+                                    None => return Err(BlockErr::Get("World Get Entity by Id self block map id")),
                                 }
                             },
-                            None => return Err(BlockErr::Get("World Get Entity by Id self block map id")),
+                            None => (),
                         }
                     },
                     None => return Err(BlockErr::Get("Entity Get Block Coords")),
