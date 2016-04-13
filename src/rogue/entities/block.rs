@@ -20,7 +20,7 @@ pub fn new_block_entity(block_type: BlockType, block_coords: BlockCoords, manage
         },
     };
 
-    
+
 
     Ok(id)
 }
