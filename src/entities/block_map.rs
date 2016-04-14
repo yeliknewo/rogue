@@ -3,7 +3,8 @@ use std::fmt;
 
 use dorp::{World, WorldErr, IdManager, Id, IdType, Named, NamedErr};
 
-use rogue::{RogueData, RogueDataErr, BlockErr, BlockMap, BLOCK_MAP_NAME};
+use core::{RogueData, RogueDataErr, BLOCK_MAP_NAME};
+use components::{BlockErr, BlockMap};
 
 pub fn new_block_map_entity(manager: &mut IdManager, world: &mut World<RogueData>) -> Result<Id, BlockMapEntityErr> {
     let id = Id::new(manager, IdType::Entity);

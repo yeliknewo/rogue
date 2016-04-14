@@ -3,8 +3,9 @@ use std::fmt;
 
 use dorp::{World, WorldErr, IdManager, Id, IdType};
 
-use rogue::{RogueData, RogueDataErr, Block, BlockErr, BlockType, BlockCoords, BLOCK_MAP_NAME};
-use rogue::entities::{new_block_map_entity, BlockMapEntityErr};
+use components::{Block, BlockErr, BlockType, BlockCoords};
+use core::{RogueData, RogueDataErr, BLOCK_MAP_NAME};
+use entities::{new_block_map_entity, BlockMapEntityErr};
 
 pub fn new_block_entity(block_type: BlockType, block_coords: BlockCoords, manager: &mut IdManager, world: &mut World<RogueData>) -> Result<Id, BlockEntityErr> {
     let id = Id::new(manager, IdType::Entity);
@@ -19,8 +20,6 @@ pub fn new_block_entity(block_type: BlockType, block_coords: BlockCoords, manage
             Err(err) => return Err(BlockEntityErr::BlockMapEntityErr("new block map entity", err)),
         },
     };
-
-
 
     Ok(id)
 }

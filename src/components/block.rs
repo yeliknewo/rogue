@@ -6,7 +6,8 @@ use dorp::{
     Id, World, WorldErr, OptErr, EntityData
 };
 
-use rogue::{RogueData, RogueDataErr, BlockCoords, RogueWorld, BlockMap};
+use core::{RogueData, RogueDataErr, RogueWorld};
+use components::{BlockCoords, BlockMap};
 
 pub enum BlockType {
     Air,

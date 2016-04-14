@@ -1,5 +1,5 @@
 use dorp::{Map3dCoords};
 
-use rogue::utils::{BlockCoordSize};
+use core::{BlockCoordSize};
 
 pub type BlockCoords = Map3dCoords<BlockCoordSize>;

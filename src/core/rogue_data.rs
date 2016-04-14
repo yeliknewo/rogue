@@ -7,7 +7,7 @@ use dorp::{
     RenderableErr, TransformErr, Map3d, Scene, OptErr, TickCount
 };
 
-use rogue::{Block, BlockMap, BlockCoords};
+use components::{Block, BlockMap, BlockCoords};
 
 pub struct RogueData {
     renderable: Option<Arc<Renderable>>,
