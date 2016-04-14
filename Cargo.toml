@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Kiley Owen <owenk@wit.edu>"]
 
 [dependencies.dorp]
-path = "../lib/"
-version = "0.1.0"
+git = "https://github.com/yeliknewo/rs-dorp.git"
+version = "*"
